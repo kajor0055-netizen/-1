@@ -1,0 +1,544 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --t50:#E1F5EE;--t100:#9FE1CB;--t200:#5DCAA5;--t400:#1D9E75;--t600:#0F6E56;--t800:#085041;
+  --b50:#E6F1FB;--b400:#378ADD;--b600:#185FA5;
+  --a50:#FAEEDA;--a200:#EF9F27;--a600:#854F0B;
+  --r50:#FCEBEB;--r200:#F09595;--r400:#E24B4A;--r600:#A32D2D;
+  --g50:#F1EFE8;--g100:#D3D1C7;--g200:#B4B2A9;--g600:#5F5E5A;
+  --gr50:#EAF3DE;--gr600:#3B6D11;
+}
+body{font-family:var(--font-sans,'Segoe UI',sans-serif);background:var(--color-background-tertiary,#f5f4f0);color:var(--color-text-primary,#1a1a1a);min-height:100vh}
+.app{display:flex;height:100vh;min-height:600px}
+.sidebar{width:220px;min-width:220px;background:var(--t800);display:flex;flex-direction:column}
+.sb-head{padding:20px 18px 16px;border-bottom:0.5px solid rgba(255,255,255,.12)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-ic{width:32px;height:32px;background:var(--t400);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.logo-ic i{font-size:17px;color:#fff}
+.logo-tx{font-size:14px;font-weight:500;color:#fff;line-height:1.3}
+.logo-tx span{font-size:11px;color:var(--t100);font-weight:400;display:block}
+.nav{padding:10px 0;flex:1}
+.nav-lbl{font-size:10px;color:var(--t200);letter-spacing:.08em;padding:12px 18px 4px;text-transform:uppercase;font-weight:500}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:rgba(255,255,255,.7);font-size:13px;border-left:2px solid transparent;transition:all .15s}
+.ni:hover{background:rgba(255,255,255,.06);color:#fff}
+.ni.active{background:rgba(255,255,255,.1);color:#fff;border-left-color:var(--t100)}
+.ni i{font-size:16px}
+.sb-foot{padding:14px 18px;border-top:0.5px solid rgba(255,255,255,.12)}
+.urow{display:flex;align-items:center;gap:9px}
+.uav{width:30px;height:30px;border-radius:50%;background:var(--t400);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#fff}
+.uinfo .name{font-size:12px;color:#fff;font-weight:500}
+.uinfo .role{font-size:11px;color:var(--t200)}
+.cdot{width:8px;height:8px;border-radius:50%;background:var(--g200);margin-left:auto;transition:background .3s}
+.cdot.ok{background:#28c840}
+.cdot.err{background:var(--r400)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--color-background-primary,#fff);border-bottom:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1));padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.tb-title{font-size:16px;font-weight:500}
+.sync{font-size:11px;color:var(--color-text-secondary);display:flex;align-items:center;gap:5px}
+.sync i{font-size:13px}
+.content{flex:1;overflow-y:auto;padding:20px 24px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.sc{background:var(--color-background-secondary,#f5f4f0);border-radius:var(--border-radius-md,8px);padding:14px 16px}
+.sc-lbl{font-size:12px;color:var(--color-text-secondary);margin-bottom:4px}
+.sc-val{font-size:22px;font-weight:500}
+.sc-sub{font-size:11px;color:var(--color-text-tertiary,#aaa);margin-top:2px}
+.panel{background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1));border-radius:var(--border-radius-lg,12px);margin-bottom:16px;overflow:hidden}
+.ph{padding:14px 18px;border-bottom:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1));display:flex;align-items:center;justify-content:space-between}
+.pt{font-size:14px;font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--color-background-secondary,#f5f4f0);padding:9px 14px;text-align:left;font-weight:500;font-size:12px;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary)}
+td{padding:10px 14px;border-bottom:0.5px solid rgba(0,0,0,.05);color:var(--color-text-primary)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,0,0,.015)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.bt{background:var(--t50);color:var(--t600)}
+.ba{background:var(--a50);color:var(--a600)}
+.br{background:var(--r50);color:var(--r600)}
+.bb{background:var(--b50);color:var(--b600)}
+.bg{background:var(--g50);color:var(--g600)}
+.bgr{background:var(--gr50);color:var(--gr600)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--border-radius-md,8px);border:0.5px solid var(--color-border-secondary,rgba(0,0,0,.2));background:transparent;font-size:13px;cursor:pointer;color:var(--color-text-primary);font-family:inherit;transition:all .15s}
+.btn:hover{background:var(--color-background-secondary)}
+.btn:active{transform:scale(.98)}
+.btn-p{background:var(--t600);color:#fff;border-color:var(--t600)}
+.btn-p:hover{background:var(--t800);border-color:var(--t800)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn i{font-size:15px}
+.page{display:none}
+.page.active{display:block}
+.fg{margin-bottom:14px}
+.fl{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:5px;display:block}
+.fi,.fs{width:100%;padding:8px 11px;border-radius:var(--border-radius-md,8px);border:0.5px solid var(--color-border-secondary,rgba(0,0,0,.2));font-size:13px;font-family:inherit;color:var(--color-text-primary);background:var(--color-background-primary,#fff)}
+.fi:focus,.fs:focus{outline:none;border-color:var(--t400);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:100}
+.mo.open{display:flex}
+.md{background:var(--color-background-primary,#fff);border-radius:var(--border-radius-lg,12px);width:460px;max-width:96vw;border:0.5px solid var(--color-border-tertiary)}
+.mh{padding:18px 20px 14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between}
+.mt{font-size:15px;font-weight:500}
+.mc{background:none;border:none;cursor:pointer;color:var(--color-text-secondary);font-size:20px;line-height:1;display:flex}
+.mb{padding:18px 20px}
+.mf{padding:14px 20px;border-top:0.5px solid var(--color-border-tertiary);display:flex;gap:8px;justify-content:flex-end}
+.ib{width:28px;height:28px;border-radius:6px;border:none;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--color-text-secondary);font-size:15px;transition:all .12s}
+.ib:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.ib.d:hover{background:var(--r50);color:var(--r600)}
+.al{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;align-items:center;gap:8px}
+.al.show{display:flex}
+.al-ok{background:var(--t50);color:var(--t600);border:0.5px solid var(--t100)}
+.al-err{background:var(--r50);color:var(--r600);border:0.5px solid var(--r200)}
+.ld{text-align:center;padding:30px;color:var(--color-text-secondary);font-size:13px}
+.ld i{font-size:24px;display:block;margin-bottom:8px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.emp{text-align:center;padding:32px;color:var(--color-text-secondary);font-size:13px}
+.emp i{font-size:28px;display:block;margin-bottom:8px;color:var(--g100)}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;background:var(--t50);color:var(--t800);margin-right:4px}
+.pb{height:5px;background:var(--g100);border-radius:3px;overflow:hidden;max-width:80px;margin-top:4px}
+.pf{height:100%;border-radius:3px}
+.tx-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.si{padding:7px 12px;border-radius:8px;border:0.5px solid var(--color-border-secondary,rgba(0,0,0,.2));background:var(--color-background-secondary);font-size:13px;font-family:inherit;color:var(--color-text-primary);width:200px}
+.si:focus{outline:none;border-color:var(--t400)}
+</style>
+
+<h2 class="sr-only">StockPro ระบบจัดการคลังอุปกรณ์เชื่อมต่อ Supabase</h2>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo">
+        <div class="logo-ic"><i class="ti ti-package" aria-hidden="true"></i></div>
+        <div class="logo-tx">StockPro <span>ระบบคลังอุปกรณ์</span></div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-lbl">เมนูหลัก</div>
+      <div class="ni active" onclick="showPage('dashboard',this)"><i class="ti ti-layout-dashboard" aria-hidden="true"></i><span>แดชบอร์ด</span></div>
+      <div class="ni" onclick="showPage('items',this)"><i class="ti ti-box" aria-hidden="true"></i><span>รายการอุปกรณ์</span></div>
+      <div class="ni" onclick="showPage('transactions',this)"><i class="ti ti-arrows-exchange" aria-hidden="true"></i><span>เบิก / จ่ายของ</span></div>
+      <div class="nav-lbl">จัดการ</div>
+      <div class="ni" onclick="showPage('history',this)"><i class="ti ti-clock-record" aria-hidden="true"></i><span>ประวัติ</span></div>
+      <div class="ni" onclick="showPage('users',this)"><i class="ti ti-users" aria-hidden="true"></i><span>ผู้ใช้งาน</span></div>
+    </nav>
+    <div class="sb-foot">
+      <div class="urow">
+        <div class="uav">AD</div>
+        <div class="uinfo"><div class="name">Admin</div><div class="role">ผู้ดูแลระบบ</div></div>
+        <div class="cdot" id="cdot" title="สถานะการเชื่อมต่อ"></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-title" id="pageTitle">แดชบอร์ด</div>
+      <div class="sync" id="syncBadge"><i class="ti ti-refresh" aria-hidden="true"></i><span>กำลังเชื่อมต่อ...</span></div>
+    </div>
+    <div class="content">
+
+      <div class="page active" id="page-dashboard">
+        <div class="stats">
+          <div class="sc"><div class="sc-lbl">อุปกรณ์ทั้งหมด</div><div class="sc-val" style="color:var(--t600)" id="s1">—</div><div class="sc-sub">รายการ</div></div>
+          <div class="sc"><div class="sc-lbl">ใกล้หมด</div><div class="sc-val" style="color:var(--a600)" id="s2">—</div><div class="sc-sub">รายการ</div></div>
+          <div class="sc"><div class="sc-lbl">เบิกทั้งหมด</div><div class="sc-val" style="color:var(--b600)" id="s3">—</div><div class="sc-sub">ครั้ง</div></div>
+          <div class="sc"><div class="sc-lbl">ผู้ใช้งาน</div><div class="sc-val" id="s4">—</div><div class="sc-sub">คน</div></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="pt">อุปกรณ์ใกล้หมด</div><button class="btn btn-sm" onclick="loadAll()"><i class="ti ti-refresh" aria-hidden="true"></i> รีเฟรช</button></div>
+          <div id="lowWrap"><div class="ld"><i class="ti ti-loader" aria-hidden="true"></i>กำลังโหลด...</div></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="pt">รายการเบิกล่าสุด</div></div>
+          <div id="recentWrap"><div class="ld"><i class="ti ti-loader" aria-hidden="true"></i>กำลังโหลด...</div></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-items">
+        <div class="al al-ok" id="iaAlert"></div>
+        <div class="panel">
+          <div class="ph">
+            <div class="pt">รายการอุปกรณ์</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="si" placeholder="ค้นหา..." id="itemSrch" oninput="renderItems()">
+              <button class="btn btn-p" onclick="openM('addItemM')"><i class="ti ti-plus" aria-hidden="true"></i> เพิ่มอุปกรณ์</button>
+            </div>
+          </div>
+          <div id="itemsWrap"><div class="ld"><i class="ti ti-loader" aria-hidden="true"></i>กำลังโหลด...</div></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-transactions">
+        <div class="al al-ok" id="txAlert"></div>
+        <div class="tx-grid">
+          <div class="panel">
+            <div class="ph"><div class="pt" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--r400);display:inline-block"></span>เบิกของ (นำออก)</div></div>
+            <div style="padding:18px">
+              <div class="fg"><label class="fl">อุปกรณ์</label><select class="fs" id="wItem"><option value="">-- เลือกอุปกรณ์ --</option></select></div>
+              <div class="fg"><label class="fl">จำนวน</label><input type="number" class="fi" id="wQty" min="1" value="1"></div>
+              <div class="fg"><label class="fl">ผู้เบิก</label><select class="fs" id="wUser"><option value="">-- เลือกผู้เบิก --</option></select></div>
+              <div class="fg"><label class="fl">หมายเหตุ</label><input type="text" class="fi" id="wNote" placeholder="วัตถุประสงค์..."></div>
+              <button class="btn" style="width:100%;background:var(--r50);color:var(--r600);border-color:var(--r200)" onclick="doWithdraw()"><i class="ti ti-arrow-up-right" aria-hidden="true"></i> ยืนยันการเบิก</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><div class="pt" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--t400);display:inline-block"></span>จ่ายเข้า (เพิ่มสต็อก)</div></div>
+            <div style="padding:18px">
+              <div class="fg"><label class="fl">อุปกรณ์</label><select class="fs" id="dItem"><option value="">-- เลือกอุปกรณ์ --</option></select></div>
+              <div class="fg"><label class="fl">จำนวน</label><input type="number" class="fi" id="dQty" min="1" value="1"></div>
+              <div class="fg"><label class="fl">ผู้ดำเนินการ</label><select class="fs" id="dUser"><option value="">-- เลือกผู้ดำเนินการ --</option></select></div>
+              <div class="fg"><label class="fl">หมายเหตุ</label><input type="text" class="fi" id="dNote" placeholder="แหล่งที่มา..."></div>
+              <button class="btn btn-p" style="width:100%" onclick="doDeposit()"><i class="ti ti-arrow-down-left" aria-hidden="true"></i> ยืนยันการจ่ายเข้า</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-history">
+        <div class="panel">
+          <div class="ph">
+            <div class="pt">ประวัติการเบิก-จ่าย</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select class="fs" style="width:130px;padding:7px 11px;font-size:13px" id="histF" onchange="renderHistory()">
+                <option value="all">ทั้งหมด</option>
+                <option value="withdraw">เบิกออก</option>
+                <option value="deposit">เพิ่มเข้า</option>
+              </select>
+              <input class="si" placeholder="ค้นหา..." id="histSrch" oninput="renderHistory()">
+            </div>
+          </div>
+          <div id="histWrap"><div class="ld"><i class="ti ti-loader" aria-hidden="true"></i>กำลังโหลด...</div></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-users">
+        <div class="al al-ok" id="uAlert"></div>
+        <div class="panel">
+          <div class="ph">
+            <div class="pt">ผู้ใช้งาน</div>
+            <button class="btn btn-p" onclick="openM('addUserM')"><i class="ti ti-user-plus" aria-hidden="true"></i> เพิ่มผู้ใช้</button>
+          </div>
+          <div id="usersWrap"><div class="ld"><i class="ti ti-loader" aria-hidden="true"></i>กำลังโหลด...</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Item -->
+<div class="mo" id="addItemM">
+  <div class="md">
+    <div class="mh"><span class="mt">เพิ่มอุปกรณ์</span><button class="mc" onclick="closeM('addItemM')"><i class="ti ti-x"></i></button></div>
+    <div class="mb">
+      <div class="fr">
+        <div class="fg"><label class="fl">รหัสอุปกรณ์</label><input type="text" class="fi" id="iCode" placeholder="EQ-001"></div>
+        <div class="fg"><label class="fl">หมวดหมู่</label><select class="fs" id="iCat"><option>อิเล็กทรอนิกส์</option><option>เครื่องมือ</option><option>สำนักงาน</option><option>อื่นๆ</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">ชื่ออุปกรณ์</label><input type="text" class="fi" id="iName" placeholder="ระบุชื่ออุปกรณ์"></div>
+      <div class="fr">
+        <div class="fg"><label class="fl">จำนวน</label><input type="number" class="fi" id="iQty" min="0" value="1"></div>
+        <div class="fg"><label class="fl">หน่วย</label><input type="text" class="fi" id="iUnit" placeholder="ชิ้น, เครื่อง..."></div>
+      </div>
+      <div class="fg"><label class="fl">แจ้งเตือนเมื่อเหลือน้อยกว่า</label><input type="number" class="fi" id="iMin" min="0" value="5"></div>
+    </div>
+    <div class="mf"><button class="btn" onclick="closeM('addItemM')">ยกเลิก</button><button class="btn btn-p" onclick="addItem()"><i class="ti ti-check" aria-hidden="true"></i> บันทึก</button></div>
+  </div>
+</div>
+
+<!-- Modal Edit Item -->
+<div class="mo" id="editItemM">
+  <div class="md">
+    <div class="mh"><span class="mt">แก้ไขอุปกรณ์</span><button class="mc" onclick="closeM('editItemM')"><i class="ti ti-x"></i></button></div>
+    <div class="mb">
+      <input type="hidden" id="eId">
+      <div class="fr">
+        <div class="fg"><label class="fl">รหัสอุปกรณ์</label><input type="text" class="fi" id="eCode"></div>
+        <div class="fg"><label class="fl">หมวดหมู่</label><select class="fs" id="eCat"><option>อิเล็กทรอนิกส์</option><option>เครื่องมือ</option><option>สำนักงาน</option><option>อื่นๆ</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">ชื่ออุปกรณ์</label><input type="text" class="fi" id="eName"></div>
+      <div class="fr">
+        <div class="fg"><label class="fl">จำนวน</label><input type="number" class="fi" id="eQty" min="0"></div>
+        <div class="fg"><label class="fl">หน่วย</label><input type="text" class="fi" id="eUnit"></div>
+      </div>
+      <div class="fg"><label class="fl">แจ้งเตือนขั้นต่ำ</label><input type="number" class="fi" id="eMin" min="0"></div>
+    </div>
+    <div class="mf"><button class="btn" onclick="closeM('editItemM')">ยกเลิก</button><button class="btn btn-p" onclick="saveItem()"><i class="ti ti-check" aria-hidden="true"></i> บันทึก</button></div>
+  </div>
+</div>
+
+<!-- Modal Add User -->
+<div class="mo" id="addUserM">
+  <div class="md">
+    <div class="mh"><span class="mt">เพิ่มผู้ใช้งาน</span><button class="mc" onclick="closeM('addUserM')"><i class="ti ti-x"></i></button></div>
+    <div class="mb">
+      <div class="fr">
+        <div class="fg"><label class="fl">ชื่อ-นามสกุล</label><input type="text" class="fi" id="uName" placeholder="ชื่อ นามสกุล"></div>
+        <div class="fg"><label class="fl">แผนก</label><input type="text" class="fi" id="uDept" placeholder="เช่น IT, บัญชี"></div>
+      </div>
+      <div class="fg"><label class="fl">อีเมล</label><input type="email" class="fi" id="uEmail" placeholder="email@company.com"></div>
+      <div class="fg"><label class="fl">สิทธิ์</label><select class="fs" id="uRole"><option value="user">ผู้ใช้ทั่วไป</option><option value="staff">เจ้าหน้าที่คลัง</option><option value="admin">ผู้ดูแลระบบ</option></select></div>
+    </div>
+    <div class="mf"><button class="btn" onclick="closeM('addUserM')">ยกเลิก</button><button class="btn btn-p" onclick="addUser()"><i class="ti ti-check" aria-hidden="true"></i> บันทึก</button></div>
+  </div>
+</div>
+
+<script>
+const URL_ = 'https://pynezkfmpdjgzcphmrek.supabase.co';
+const KEY_ = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5bmV6a2ZtcGRqZ3pjcGhtcmVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjUxNDcsImV4cCI6MjA5NTgwMTE0N30.met9oQ4pfvjzilzA6NTy589KAt-x70vv-3W0ogpDHQQ';
+
+const H = {'Content-Type':'application/json','apikey':KEY_,'Authorization':'Bearer '+KEY_};
+
+async function sGet(t,p=''){
+  const r=await fetch(`${URL_}/rest/v1/${t}?${p}`,{headers:H});
+  if(!r.ok)throw new Error(await r.text());
+  return r.json();
+}
+async function sPost(t,b){
+  const r=await fetch(`${URL_}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(b)});
+  if(!r.ok)throw new Error(await r.text());
+  return r.json();
+}
+async function sPatch(t,id,b){
+  const r=await fetch(`${URL_}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(b)});
+  if(!r.ok)throw new Error(await r.text());
+  return r.json();
+}
+async function sDel(t,id){
+  const r=await fetch(`${URL_}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});
+  if(!r.ok)throw new Error(await r.text());
+}
+
+let items=[],txs=[],users=[];
+
+async function loadAll(){
+  setSS('loading');
+  try{
+    [items,txs,users]=await Promise.all([
+      sGet('items','order=created_at.asc'),
+      sGet('transactions','order=created_at.desc&limit=200'),
+      sGet('users_list','order=created_at.asc')
+    ]);
+    setConn(true); setSS('ok'); refresh();
+  }catch(e){
+    setConn(false); setSS('err');
+    console.error(e);
+  }
+}
+
+function setSS(s){
+  const el=document.getElementById('syncBadge');
+  if(s==='loading') el.innerHTML='<i class="ti ti-refresh" style="animation:spin 1s linear infinite" aria-hidden="true"></i><span>กำลังซิงค์...</span>';
+  else if(s==='ok') el.innerHTML='<i class="ti ti-circle-check" style="color:var(--t400)" aria-hidden="true"></i><span style="color:var(--t600)">ซิงค์แล้ว</span>';
+  else el.innerHTML='<i class="ti ti-circle-x" style="color:var(--r400)" aria-hidden="true"></i><span style="color:var(--r600)">เชื่อมต่อไม่ได้</span>';
+}
+function setConn(ok){
+  const d=document.getElementById('cdot');
+  d.className='cdot '+(ok?'ok':'err');
+  d.title=ok?'เชื่อมต่อ Supabase แล้ว':'เชื่อมต่อไม่ได้';
+}
+
+function refresh(){
+  const a=document.querySelector('.page.active');
+  if(!a)return;
+  const id=a.id.replace('page-','');
+  if(id==='dashboard')rdash();
+  if(id==='items')renderItems();
+  if(id==='transactions')renderTx();
+  if(id==='history')renderHistory();
+  if(id==='users')renderUsers();
+}
+
+function showPage(n,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+n).classList.add('active');
+  if(el)el.classList.add('active');
+  const tt={dashboard:'แดชบอร์ด',items:'รายการอุปกรณ์',transactions:'เบิก / จ่ายของ',history:'ประวัติการเบิก-จ่าย',users:'ผู้ใช้งาน'};
+  document.getElementById('pageTitle').textContent=tt[n]||n;
+  refresh();
+}
+function openM(id){document.getElementById(id).classList.add('open')}
+function closeM(id){document.getElementById(id).classList.remove('open')}
+
+function sbadge(i){
+  if(i.qty===0)return'<span class="badge br">หมด</span>';
+  if(i.qty<=i.min_qty)return'<span class="badge ba">ใกล้หมด</span>';
+  return'<span class="badge bt">มีของ</span>';
+}
+function rbadge(r){
+  return{admin:'<span class="badge bt">ผู้ดูแลระบบ</span>',staff:'<span class="badge bb">เจ้าหน้าที่</span>',user:'<span class="badge bg">ทั่วไป</span>'}[r]||r;
+}
+function fdt(d){
+  if(!d)return'—';
+  return new Date(d).toLocaleString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+function rdash(){
+  const low=items.filter(i=>i.qty<=i.min_qty);
+  document.getElementById('s1').textContent=items.length;
+  document.getElementById('s2').textContent=low.length;
+  document.getElementById('s3').textContent=txs.length;
+  document.getElementById('s4').textContent=users.length;
+  document.getElementById('lowWrap').innerHTML=low.length
+    ?`<table><thead><tr><th>ชื่ออุปกรณ์</th><th>หมวดหมู่</th><th>คงเหลือ</th><th>สถานะ</th></tr></thead><tbody>${low.map(i=>`<tr><td>${i.name}</td><td>${i.category||'—'}</td><td><strong>${i.qty}</strong> ${i.unit}</td><td>${sbadge(i)}</td></tr>`).join('')}</tbody></table>`
+    :`<div class="emp"><i class="ti ti-circle-check" aria-hidden="true"></i>ไม่มีอุปกรณ์ใกล้หมด</div>`;
+  const rc=txs.slice(0,6);
+  document.getElementById('recentWrap').innerHTML=rc.length
+    ?`<table><thead><tr><th>วันที่</th><th>อุปกรณ์</th><th>ประเภท</th><th>จำนวน</th><th>ผู้ดำเนินการ</th></tr></thead><tbody>${rc.map(t=>`<tr><td style="font-size:12px;color:var(--color-text-secondary)">${fdt(t.created_at)}</td><td>${t.item_name||'—'}</td><td>${t.type==='withdraw'?'<span class="badge br">เบิก</span>':'<span class="badge bt">เพิ่มเข้า</span>'}</td><td>${t.qty}</td><td>${t.user_name||'—'}</td></tr>`).join('')}</tbody></table>`
+    :`<div class="emp"><i class="ti ti-history" aria-hidden="true"></i>ยังไม่มีรายการ</div>`;
+}
+
+function renderItems(){
+  const q=(document.getElementById('itemSrch')||{value:''}).value.toLowerCase();
+  const list=items.filter(i=>i.name.toLowerCase().includes(q)||((i.code||'').toLowerCase().includes(q)));
+  document.getElementById('itemsWrap').innerHTML=list.length
+    ?`<table><thead><tr><th>รหัส</th><th>ชื่อ</th><th>หมวดหมู่</th><th>คงเหลือ</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>${list.map(i=>`<tr>
+      <td style="font-family:var(--font-mono,'monospace');font-size:12px;color:var(--color-text-secondary)">${i.code||'—'}</td>
+      <td><strong style="font-weight:500">${i.name}</strong></td>
+      <td><span class="tag">${i.category||'—'}</span></td>
+      <td><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:500">${i.qty} ${i.unit}</span><div class="pb"><div class="pf" style="width:${Math.min(100,Math.round(i.qty/Math.max(i.min_qty*3,1)*100))}%;background:${i.qty===0?'var(--r400)':i.qty<=i.min_qty?'var(--a200)':'var(--t400)'}"></div></div></div></td>
+      <td>${sbadge(i)}</td>
+      <td><button class="ib" onclick="openEdit(${i.id})" aria-label="แก้ไข"><i class="ti ti-edit" aria-hidden="true"></i></button><button class="ib d" onclick="delItem(${i.id})" aria-label="ลบ"><i class="ti ti-trash" aria-hidden="true"></i></button></td>
+    </tr>`).join('')}</tbody></table>`
+    :`<div class="emp"><i class="ti ti-box-off" aria-hidden="true"></i>ไม่พบรายการ</div>`;
+}
+
+async function addItem(){
+  const name=document.getElementById('iName').value.trim();
+  if(!name){alert('กรุณาระบุชื่อ');return;}
+  try{
+    const res=await sPost('items',{code:document.getElementById('iCode').value.trim()||null,name,category:document.getElementById('iCat').value,qty:parseInt(document.getElementById('iQty').value)||0,unit:document.getElementById('iUnit').value.trim()||'ชิ้น',min_qty:parseInt(document.getElementById('iMin').value)||5});
+    items.push(res[0]);
+    closeM('addItemM');
+    ['iCode','iName','iUnit'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('iQty').value='1';document.getElementById('iMin').value='5';
+    showAl('iaAlert','เพิ่มอุปกรณ์สำเร็จ — บันทึกลง Supabase แล้ว');
+    renderItems();
+  }catch(e){showAl('iaAlert','เกิดข้อผิดพลาด: '+e.message,'err')}
+}
+
+function openEdit(id){
+  const i=items.find(x=>x.id===id);if(!i)return;
+  document.getElementById('eId').value=id;
+  document.getElementById('eCode').value=i.code||'';
+  document.getElementById('eName').value=i.name;
+  document.getElementById('eCat').value=i.category||'อิเล็กทรอนิกส์';
+  document.getElementById('eQty').value=i.qty;
+  document.getElementById('eUnit').value=i.unit;
+  document.getElementById('eMin').value=i.min_qty;
+  openM('editItemM');
+}
+
+async function saveItem(){
+  const id=parseInt(document.getElementById('eId').value);
+  const b={code:document.getElementById('eCode').value,name:document.getElementById('eName').value,category:document.getElementById('eCat').value,qty:parseInt(document.getElementById('eQty').value)||0,unit:document.getElementById('eUnit').value,min_qty:parseInt(document.getElementById('eMin').value)||5};
+  try{
+    await sPatch('items',id,b);
+    const idx=items.findIndex(x=>x.id===id);
+    if(idx>-1)items[idx]={...items[idx],...b};
+    closeM('editItemM');
+    showAl('iaAlert','แก้ไขสำเร็จ');
+    renderItems();
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message)}
+}
+
+async function delItem(id){
+  if(!confirm('ต้องการลบรายการนี้?'))return;
+  try{await sDel('items',id);items=items.filter(x=>x.id!==id);showAl('iaAlert','ลบเรียบร้อย');renderItems();}
+  catch(e){alert('เกิดข้อผิดพลาด: '+e.message)}
+}
+
+function renderTx(){
+  const oo='<option value="">-- เลือกอุปกรณ์ --</option>'+items.map(i=>`<option value="${i.id}">${i.name} (เหลือ: ${i.qty} ${i.unit})</option>`).join('');
+  document.getElementById('wItem').innerHTML=oo;
+  document.getElementById('dItem').innerHTML=oo;
+  const uu='<option value="">-- เลือก --</option>'+users.map(u=>`<option value="${u.name}">${u.name}</option>`).join('');
+  document.getElementById('wUser').innerHTML=uu;
+  document.getElementById('dUser').innerHTML=uu;
+}
+
+async function doWithdraw(){
+  const iid=parseInt(document.getElementById('wItem').value);
+  const qty=parseInt(document.getElementById('wQty').value)||1;
+  const uname=document.getElementById('wUser').value;
+  const note=document.getElementById('wNote').value;
+  const item=items.find(x=>x.id===iid);
+  if(!item){alert('กรุณาเลือกอุปกรณ์');return;}
+  if(item.qty<qty){alert(`จำนวนไม่พอ มีเพียง ${item.qty} ${item.unit}`);return;}
+  try{
+    const nq=item.qty-qty;
+    await sPatch('items',iid,{qty:nq});
+    const tx=await sPost('transactions',{item_id:iid,item_name:item.name,type:'withdraw',qty,user_name:uname||'ไม่ระบุ',note});
+    item.qty=nq; txs.unshift(tx[0]);
+    document.getElementById('wItem').value='';document.getElementById('wQty').value='1';document.getElementById('wUser').value='';document.getElementById('wNote').value='';
+    renderTx();
+    showAl('txAlert',`เบิก "${item.name}" ${qty} ${item.unit} สำเร็จ`);
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message)}
+}
+
+async function doDeposit(){
+  const iid=parseInt(document.getElementById('dItem').value);
+  const qty=parseInt(document.getElementById('dQty').value)||1;
+  const uname=document.getElementById('dUser').value;
+  const note=document.getElementById('dNote').value;
+  const item=items.find(x=>x.id===iid);
+  if(!item){alert('กรุณาเลือกอุปกรณ์');return;}
+  try{
+    const nq=item.qty+qty;
+    await sPatch('items',iid,{qty:nq});
+    const tx=await sPost('transactions',{item_id:iid,item_name:item.name,type:'deposit',qty,user_name:uname||'ไม่ระบุ',note});
+    item.qty=nq; txs.unshift(tx[0]);
+    document.getElementById('dItem').value='';document.getElementById('dQty').value='1';document.getElementById('dUser').value='';document.getElementById('dNote').value='';
+    renderTx();
+    showAl('txAlert',`เพิ่มสต็อก "${item.name}" ${qty} ${item.unit} สำเร็จ`);
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message)}
+}
+
+function renderHistory(){
+  const f=document.getElementById('histF').value;
+  const q=(document.getElementById('histSrch').value||'').toLowerCase();
+  let list=[...txs];
+  if(f!=='all')list=list.filter(t=>t.type===f);
+  if(q)list=list.filter(t=>(t.item_name||'').toLowerCase().includes(q)||(t.user_name||'').toLowerCase().includes(q)||(t.note||'').toLowerCase().includes(q));
+  document.getElementById('histWrap').innerHTML=list.length
+    ?`<table><thead><tr><th>วันที่/เวลา</th><th>อุปกรณ์</th><th>ประเภท</th><th>จำนวน</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th></tr></thead><tbody>${list.map(t=>`<tr><td style="font-size:12px;color:var(--color-text-secondary);white-space:nowrap">${fdt(t.created_at)}</td><td>${t.item_name||'—'}</td><td>${t.type==='withdraw'?'<span class="badge br">เบิกออก</span>':'<span class="badge bt">เพิ่มเข้า</span>'}</td><td style="font-weight:500">${t.qty}</td><td>${t.user_name||'—'}</td><td style="color:var(--color-text-secondary);font-size:12px">${t.note||'—'}</td></tr>`).join('')}</tbody></table>`
+    :`<div class="emp"><i class="ti ti-history" aria-hidden="true"></i>ไม่มีประวัติ</div>`;
+}
+
+function renderUsers(){
+  document.getElementById('usersWrap').innerHTML=users.length
+    ?`<table><thead><tr><th>ผู้ใช้งาน</th><th>อีเมล</th><th>แผนก</th><th>สิทธิ์</th><th>จัดการ</th></tr></thead><tbody>${users.map(u=>{
+      const ini=u.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+      return`<tr><td><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;border-radius:50%;background:var(--b50);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--b600)">${ini}</div><span>${u.name}</span></div></td><td style="font-size:12px;color:var(--color-text-secondary)">${u.email||'—'}</td><td><span class="tag">${u.department||'—'}</span></td><td>${rbadge(u.role)}</td><td><button class="ib d" onclick="delUser(${u.id})" aria-label="ลบ"><i class="ti ti-trash" aria-hidden="true"></i></button></td></tr>`;
+    }).join('')}</tbody></table>`
+    :`<div class="emp"><i class="ti ti-users" aria-hidden="true"></i>ยังไม่มีผู้ใช้งาน</div>`;
+}
+
+async function addUser(){
+  const name=document.getElementById('uName').value.trim();
+  if(!name){alert('กรุณาระบุชื่อ');return;}
+  try{
+    const res=await sPost('users_list',{name,email:document.getElementById('uEmail').value.trim()||null,department:document.getElementById('uDept').value.trim()||null,role:document.getElementById('uRole').value});
+    users.push(res[0]);
+    closeM('addUserM');
+    ['uName','uEmail','uDept'].forEach(id=>document.getElementById(id).value='');
+    showAl('uAlert','เพิ่มผู้ใช้งานสำเร็จ');
+    renderUsers();renderTx();
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message)}
+}
+
+async function delUser(id){
+  if(!confirm('ต้องการลบผู้ใช้นี้?'))return;
+  try{await sDel('users_list',id);users=users.filter(x=>x.id!==id);showAl('uAlert','ลบผู้ใช้แล้ว');renderUsers();}
+  catch(e){alert('เกิดข้อผิดพลาด: '+e.message)}
+}
+
+function showAl(id,msg,type='ok'){
+  const el=document.getElementById(id);if(!el)return;
+  el.className=`al al-${type==='err'?'err':'ok'} show`;
+  el.innerHTML=`<i class="ti ti-${type==='err'?'alert-circle':'circle-check'}" aria-hidden="true"></i>${msg}`;
+  setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+loadAll();
+setInterval(loadAll,30000);
+</script>
