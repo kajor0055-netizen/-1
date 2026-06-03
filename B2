@@ -523,14 +523,14 @@ async function doWithdraw(){
   const iid=parseInt(document.getElementById('wItem').value);const qty=parseInt(document.getElementById('wQty').value)||1;const uname=document.getElementById('wUser').value;const note=document.getElementById('wNote').value;
   const item=items.find(x=>x.id===iid);
   if(!item){alert('กรุณาเลือกอุปกรณ์');return;}if(item.qty<qty){alert(`จำนวนไม่พอ มีเพียง ${item.qty} ${item.unit}`);return;}
-  try{const nq=item.qty-qty;await sPatch('items',iid,{qty:nq});const tx=await sPost('transactions',{item_id:iid,item_name:item.name,type:'withdraw',qty,user_name:uname||'ไม่ระบุ',note});item.qty=nq;txs.unshift(tx[0]);document.getElementById('wItem').value='';document.getElementById('wQty').value='1';document.getElementById('wUser').value='';document.getElementById('wNote').value='';renderTx();showAl('txAlert',`เบิก "${item.name}" ${qty} ${item.unit} สำเร็จ`);}
+  try{const nq=item.qty-qty;await sPatch('items',iid,{qty:nq});const tx=await sPost('transactions',{item_id:iid,item_name:item.name,type:'withdraw',qty,user_name:uname||'ไม่ระบุ',note});item.qty=nq;txs.unshift(tx[0]);tgWithdraw(item,qty,uname,note,nq);document.getElementById('wItem').value='';document.getElementById('wQty').value='1';document.getElementById('wUser').value='';document.getElementById('wNote').value='';renderTx();showAl('txAlert',`เบิก "${item.name}" ${qty} ${item.unit} สำเร็จ ✅ แจ้ง Telegram แล้ว`);}
   catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 async function doDeposit(){
   const iid=parseInt(document.getElementById('dItem').value);const qty=parseInt(document.getElementById('dQty').value)||1;const uname=document.getElementById('dUser').value;const note=document.getElementById('dNote').value;
   const item=items.find(x=>x.id===iid);
   if(!item){alert('กรุณาเลือกอุปกรณ์');return;}
-  try{const nq=item.qty+qty;await sPatch('items',iid,{qty:nq});const tx=await sPost('transactions',{item_id:iid,item_name:item.name,type:'deposit',qty,user_name:uname||'ไม่ระบุ',note});item.qty=nq;txs.unshift(tx[0]);document.getElementById('dItem').value='';document.getElementById('dQty').value='1';document.getElementById('dUser').value='';document.getElementById('dNote').value='';renderTx();showAl('txAlert',`เพิ่มสต็อก "${item.name}" ${qty} ${item.unit} สำเร็จ`);}
+  try{const nq=item.qty+qty;await sPatch('items',iid,{qty:nq});const tx=await sPost('transactions',{item_id:iid,item_name:item.name,type:'deposit',qty,user_name:uname||'ไม่ระบุ',note});item.qty=nq;txs.unshift(tx[0]);tgDeposit(item,qty,uname,note,nq);document.getElementById('dItem').value='';document.getElementById('dQty').value='1';document.getElementById('dUser').value='';document.getElementById('dNote').value='';renderTx();showAl('txAlert',`เพิ่มสต็อก "${item.name}" ${qty} ${item.unit} สำเร็จ ✅ แจ้ง Telegram แล้ว`);}
   catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 
@@ -563,6 +563,47 @@ function showAl(id,msg,type='ok'){
   el.className=`al al-${type==='err'?'err':'ok'} show`;
   el.innerHTML=`<i class="ti ti-${type==='err'?'alert-circle':'circle-check'}"></i>${msg}`;
   setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+// ===== TELEGRAM NOTIFICATION =====
+const TG_TOKEN='8830310617:AAHD_OSNm93C9YhwOCH-iJq67LBGqEMLaK8';
+const TG_CHAT='307615019';
+
+async function tgNotify(msg){
+  try{
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:TG_CHAT,text:msg,parse_mode:'HTML'})
+    });
+  }catch(e){console.warn('Telegram notify failed:',e);}
+}
+
+function tgWithdraw(item,qty,uname,note,newQty){
+  const now=new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  let msg=`🔴 <b>แจ้งเตือน: เบิกของออก</b>\n`;
+  msg+=`📦 รายการ: ${item.name}\n`;
+  msg+=`🔢 จำนวนที่เบิก: ${qty} ${item.unit}\n`;
+  msg+=`📊 คงเหลือ: ${newQty} ${item.unit}\n`;
+  msg+=`👤 ผู้เบิก: ${uname||'ไม่ระบุ'}\n`;
+  if(note) msg+=`📝 หมายเหตุ: ${note}\n`;
+  msg+=`🕐 เวลา: ${now}\n`;
+  msg+=`\n🏪 คลังอาภรณ์ กองร้อยพัฒนาที่ 1`;
+  if(newQty<=item.min_qty) msg+=`\n\n⚠️ <b>คำเตือน: ของใกล้หมดแล้ว!</b> เหลือเพียง ${newQty} ${item.unit}`;
+  tgNotify(msg);
+}
+
+function tgDeposit(item,qty,uname,note,newQty){
+  const now=new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  let msg=`🟢 <b>แจ้งเตือน: เพิ่มสต็อก</b>\n`;
+  msg+=`📦 รายการ: ${item.name}\n`;
+  msg+=`🔢 จำนวนที่เพิ่ม: ${qty} ${item.unit}\n`;
+  msg+=`📊 คงเหลือ: ${newQty} ${item.unit}\n`;
+  msg+=`👤 ผู้ดำเนินการ: ${uname||'ไม่ระบุ'}\n`;
+  if(note) msg+=`📝 หมายเหตุ: ${note}\n`;
+  msg+=`🕐 เวลา: ${now}\n`;
+  msg+=`\n🏪 คลังอาภรณ์ กองร้อยพัฒนาที่ 1`;
+  tgNotify(msg);
 }
 
 // Close modal on backdrop click
