@@ -619,29 +619,29 @@ async function tgNotify(msg){
 }
 
 function tgWithdraw(item,qty,uname,note,newQty){
-  const now=new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  let msg=`🔴 <b>แจ้งเตือน: เบิกของออก</b>\n`;
+  const now=new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+  let msg=`🔴 แจ้งเตือน: เบิกของออก\n`;
   msg+=`📦 รายการ: ${item.name}\n`;
   msg+=`🔢 จำนวนที่เบิก: ${qty} ${item.unit}\n`;
   msg+=`📊 คงเหลือ: ${newQty} ${item.unit}\n`;
   msg+=`👤 ผู้เบิก: ${uname||'ไม่ระบุ'}\n`;
   if(note) msg+=`📝 หมายเหตุ: ${note}\n`;
   msg+=`🕐 เวลา: ${now}\n`;
-  msg+=`\n🏪 คลังอาภรณ์ กองร้อยพัฒนาที่ 1`;
-  if(newQty<=item.min_qty) msg+=`\n\n⚠️ <b>คำเตือน: ของใกล้หมดแล้ว!</b> เหลือเพียง ${newQty} ${item.unit}`;
+  msg+=`🏪 คลังอาภรณ์ กองร้อยพัฒนาที่ 1`;
+  if(newQty<=item.min_qty) msg+=`\n\n⚠️ คำเตือน: ของใกล้หมดแล้ว! เหลือเพียง ${newQty} ${item.unit}`;
   tgNotify(msg);
 }
 
 function tgDeposit(item,qty,uname,note,newQty){
-  const now=new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  let msg=`🟢 <b>แจ้งเตือน: เพิ่มสต็อก</b>\n`;
+  const now=new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+  let msg=`🟢 แจ้งเตือน: เพิ่มสต็อก\n`;
   msg+=`📦 รายการ: ${item.name}\n`;
   msg+=`🔢 จำนวนที่เพิ่ม: ${qty} ${item.unit}\n`;
   msg+=`📊 คงเหลือ: ${newQty} ${item.unit}\n`;
   msg+=`👤 ผู้ดำเนินการ: ${uname||'ไม่ระบุ'}\n`;
   if(note) msg+=`📝 หมายเหตุ: ${note}\n`;
   msg+=`🕐 เวลา: ${now}\n`;
-  msg+=`\n🏪 คลังอาภรณ์ กองร้อยพัฒนาที่ 1`;
+  msg+=`🏪 คลังอาภรณ์ กองร้อยพัฒนาที่ 1`;
   tgNotify(msg);
 }
 
