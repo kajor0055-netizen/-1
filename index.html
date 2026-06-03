@@ -387,9 +387,41 @@ tr:hover td{background:rgba(0,0,0,.015)}
     <div class="mh"><span class="mt">เพิ่มผู้ใช้งาน</span><button class="mc" onclick="closeM('addUserM')"><i class="ti ti-x"></i></button></div>
     <div class="mb">
       <div class="fr">
+        <div class="fg"><label class="fl">ชั้นยศ</label><select class="fs" id="uRank">
+          <option value="">-- เลือกยศ --</option>
+          <optgroup label="ทหารเกณฑ์">
+            <option>พลทหาร</option>
+          </optgroup>
+          <optgroup label="นายสิบ">
+            <option>สิบตรี</option>
+            <option>สิบโท</option>
+            <option>สิบเอก</option>
+            <option>สิบเอกพิเศษ</option>
+          </optgroup>
+          <optgroup label="นายสิบชั้นประทวน">
+            <option>จ่าสิบตรี</option>
+            <option>จ่าสิบโท</option>
+            <option>จ่าสิบเอก</option>
+            <option>จ่าสิบเอกพิเศษ</option>
+          </optgroup>
+          <optgroup label="นายทหารสัญญาบัตร">
+            <option>ร้อยตรี</option>
+            <option>ร้อยโท</option>
+            <option>ร้อยเอก</option>
+            <option>พันตรี</option>
+            <option>พันโท</option>
+            <option>พันเอก</option>
+            <option>พันเอกพิเศษ</option>
+          </optgroup>
+          <optgroup label="นายพล">
+            <option>พลตรี</option>
+            <option>พลโท</option>
+            <option>พลเอก</option>
+          </optgroup>
+        </select></div>
         <div class="fg"><label class="fl">ชื่อ-นามสกุล</label><input type="text" class="fi" id="uName" placeholder="ชื่อ นามสกุล"></div>
-        <div class="fg"><label class="fl">แผนก</label><input type="text" class="fi" id="uDept" placeholder="เช่น IT"></div>
       </div>
+      <div class="fg"><label class="fl">แผนก / ตำแหน่ง</label><input type="text" class="fi" id="uDept" placeholder="เช่น คลังอาภรณ์"></div>
       <div class="fg"><label class="fl">อีเมล</label><input type="email" class="fi" id="uEmail" placeholder="email@company.com" inputmode="email"></div>
       <div class="fg"><label class="fl">สิทธิ์</label><select class="fs" id="uRole"><option value="user">ผู้ใช้ทั่วไป</option><option value="staff">เจ้าหน้าที่คลัง</option><option value="admin">ผู้ดูแลระบบ</option></select></div>
     </div>
@@ -548,8 +580,11 @@ function renderUsers(){
     :`<div class="emp"><i class="ti ti-users"></i>ยังไม่มีผู้ใช้งาน</div>`;
 }
 async function addUser(){
-  const name=document.getElementById('uName').value.trim();if(!name){alert('กรุณาระบุชื่อ');return;}
-  try{const res=await sPost('users_list',{name,email:document.getElementById('uEmail').value.trim()||null,department:document.getElementById('uDept').value.trim()||null,role:document.getElementById('uRole').value});users.push(res[0]);closeM('addUserM');['uName','uEmail','uDept'].forEach(id=>document.getElementById(id).value='');showAl('uAlert','เพิ่มผู้ใช้งานสำเร็จ');renderUsers();renderTx();}
+  const rank=document.getElementById('uRank').value;
+  const namePart=document.getElementById('uName').value.trim();
+  if(!namePart){alert('กรุณาระบุชื่อ');return;}
+  const fullName=(rank?rank+' ':'')+namePart;
+  try{const res=await sPost('users_list',{name:fullName,email:document.getElementById('uEmail').value.trim()||null,department:document.getElementById('uDept').value.trim()||null,role:document.getElementById('uRole').value});users.push(res[0]);closeM('addUserM');['uName','uEmail','uDept'].forEach(id=>document.getElementById(id).value='');document.getElementById('uRank').value='';showAl('uAlert','เพิ่มผู้ใช้งานสำเร็จ');renderUsers();renderTx();}
   catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 async function delUser(id){
