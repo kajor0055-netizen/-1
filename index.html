@@ -600,19 +600,14 @@ function showAl(id,msg,type='ok'){
   setTimeout(()=>el.classList.remove('show'),4000);
 }
 
-// ===== TELEGRAM NOTIFICATION via Supabase Edge Function =====
-const NOTIFY_URL='https://pynezkfmpdjgzcphmrek.supabase.co/functions/v1/notify';
-const NOTIFY_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5bmV6a2ZtcGRqZ3pjcGhtcmVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjUxNDcsImV4cCI6MjA5NTgwMTE0N30.met9oQ4pfvjzilzA6NTy589KAt-x70vv-3W0ogpDHQQ';
+// ===== TELEGRAM NOTIFICATION via Cloudflare Worker =====
+const NOTIFY_URL='https://silent-moon-f8bd.kajor0055.workers.dev';
 
 async function tgNotify(msg){
   try{
     await fetch(NOTIFY_URL,{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+NOTIFY_KEY,
-        'apikey':NOTIFY_KEY
-      },
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({message:msg})
     });
   }catch(e){console.warn('Telegram notify failed:',e);}
