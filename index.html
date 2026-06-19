@@ -262,7 +262,14 @@ tr:hover td{background:rgba(0,0,0,.015)}
       <!-- Transactions -->
       <div class="page" id="page-transactions">
         <div class="al al-ok" id="txAlert"></div>
-        <div class="tx-grid">
+
+        <!-- Toggle เบิกแบบ -->
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button class="btn btn-p" id="tgl-single" onclick="setTxMode('single')" style="flex:1;justify-content:center"><i class="ti ti-box"></i> เบิกรายการเดียว</button>
+          <button class="btn" id="tgl-bundle" onclick="setTxMode('bundle')" style="flex:1;justify-content:center"><i class="ti ti-packages"></i> เบิกเป็นชุด</button>
+        </div>
+
+        <div class="tx-grid" id="tx-single-panel">
           <div class="panel">
             <div class="ph"><div class="pt" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--r400);display:inline-block"></span>เบิกของ (นำออก)</div></div>
             <div style="padding:16px">
@@ -284,6 +291,28 @@ tr:hover td{background:rgba(0,0,0,.015)}
             </div>
           </div>
         </div>
+
+        <!-- เบิกเป็นชุด -->
+        <div id="tx-bundle-panel" style="display:none">
+          <div class="panel">
+            <div class="ph"><div class="pt" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--r400);display:inline-block"></span>เบิกชุดอุปกรณ์</div></div>
+            <div style="padding:16px">
+              <div class="fg">
+                <label class="fl">เลือกชุดอุปกรณ์</label>
+                <select class="fs" id="txBundleSel" onchange="renderTxBundlePreview()">
+                  <option value="">-- เลือกชุด --</option>
+                </select>
+              </div>
+              <!-- Preview รายการในชุด -->
+              <div id="txBundlePreview" style="display:none;background:var(--bg);border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px"></div>
+              <div class="fg"><label class="fl">จำนวนชุด</label><input type="number" class="fi" id="txBundleQty" min="1" value="1" inputmode="numeric" onchange="renderTxBundlePreview()"></div>
+              <div class="fg"><label class="fl">ผู้เบิก</label><select class="fs" id="txBundleUser"><option value="">-- เลือกผู้เบิก --</option></select></div>
+              <div class="fg"><label class="fl">หมายเหตุ</label><input type="text" class="fi" id="txBundleNote" placeholder="วัตถุประสงค์..."></div>
+              <button class="btn" style="width:100%;justify-content:center;background:var(--r50);color:var(--r600);border-color:var(--r200);padding:11px" onclick="doWithdrawBundleInline()"><i class="ti ti-packages"></i> ยืนยันการเบิกชุด</button>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- History -->
@@ -595,6 +624,93 @@ async function delItem(id){
   if(!confirm('ต้องการลบรายการนี้?'))return;
   try{await sDel('items',id);items=items.filter(x=>x.id!==id);showAl('iaAlert','ลบเรียบร้อย');renderItems();}
   catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
+}
+
+function setTxMode(mode){
+  const single=document.getElementById('tx-single-panel');
+  const bundle=document.getElementById('tx-bundle-panel');
+  const btnS=document.getElementById('tgl-single');
+  const btnB=document.getElementById('tgl-bundle');
+  if(mode==='single'){
+    single.style.display='';bundle.style.display='none';
+    btnS.className='btn btn-p';btnS.style.flex='1';btnS.style.justifyContent='center';
+    btnB.className='btn';btnB.style.flex='1';btnB.style.justifyContent='center';
+  }else{
+    single.style.display='none';bundle.style.display='';
+    btnS.className='btn';btnS.style.flex='1';btnS.style.justifyContent='center';
+    btnB.className='btn btn-p';btnB.style.flex='1';btnB.style.justifyContent='center';
+    renderTxBundleDropdowns();
+  }
+}
+
+function renderTxBundleDropdowns(){
+  const bSel=document.getElementById('txBundleSel');
+  bSel.innerHTML='<option value="">-- เลือกชุด --</option>'+bundles.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  const uSel=document.getElementById('txBundleUser');
+  uSel.innerHTML='<option value="">-- เลือกผู้เบิก --</option>'+users.map(u=>`<option value="${u.name}">${u.name}</option>`).join('');
+  document.getElementById('txBundlePreview').style.display='none';
+}
+
+function renderTxBundlePreview(){
+  const bid=parseInt(document.getElementById('txBundleSel').value);
+  const qty=parseInt(document.getElementById('txBundleQty').value)||1;
+  const preview=document.getElementById('txBundlePreview');
+  if(!bid){preview.style.display='none';return;}
+  const b=bundles.find(x=>x.id===bid);
+  const bItems=bundleItems.filter(x=>x.bundle_id===bid);
+  if(!bItems.length){preview.style.display='none';return;}
+  const rows=bItems.map(bi=>{
+    const it=items.find(x=>x.id===bi.item_id);
+    if(!it)return'';
+    const need=bi.quantity*qty;
+    const ok=it.qty>=need;
+    return`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:13px">
+      <span>${it.name}</span>
+      <span style="font-weight:500;color:${ok?'var(--t600)':'var(--r600)'}">−${need} ${it.unit} <span style="color:var(--text3);font-size:11px">(เหลือ ${it.qty-need>=0?it.qty-need:'ไม่พอ'})</span></span>
+    </div>`;
+  }).join('');
+  preview.style.display='';
+  preview.innerHTML=`<div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">รายการที่จะถูกเบิก (${qty} ชุด):</div>${rows}`;
+}
+
+async function doWithdrawBundleInline(){
+  const bid=parseInt(document.getElementById('txBundleSel').value);
+  const qty=parseInt(document.getElementById('txBundleQty').value)||1;
+  const uname=document.getElementById('txBundleUser').value;
+  const note=document.getElementById('txBundleNote').value;
+  if(!bid){alert('กรุณาเลือกชุดอุปกรณ์');return;}
+  const b=bundles.find(x=>x.id===bid);
+  const bItems=bundleItems.filter(x=>x.bundle_id===bid);
+  for(const bi of bItems){
+    const it=items.find(x=>x.id===bi.item_id);
+    if(!it||it.qty<bi.quantity*qty){alert(`สต็อกไม่เพียงพอ: "${it?.name||'?'}" มีเพียง ${it?.qty||0} ${it?.unit||''} แต่ต้องการ ${bi.quantity*qty}`);return;}
+  }
+  try{
+    const txList=[];
+    for(const bi of bItems){
+      const it=items.find(x=>x.id===bi.item_id);
+      const needed=bi.quantity*qty;
+      const nq=it.qty-needed;
+      await sPatch('items',it.id,{qty:nq});
+      const tx=await sPost('transactions',{item_id:it.id,item_name:it.name,type:'withdraw',qty:needed,user_name:uname||'ไม่ระบุ',note:`[ชุด: ${b.name}] ${note||''}`});
+      it.qty=nq;txs.unshift(tx[0]);
+      txList.push({name:it.name,qty:needed,unit:it.unit,remaining:nq});
+    }
+    const now=new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    let msg=`🎒 แจ้งเตือน: เบิกชุดอุปกรณ์\n📦 ชุด: ${b.name} จำนวน ${qty} ชุด\n👤 ผู้เบิก: ${uname||'ไม่ระบุ'}\n`;
+    if(note)msg+=`📝 หมายเหตุ: ${note}\n`;
+    msg+=`\nรายการที่เบิก:\n`;
+    txList.forEach(t=>{msg+=`  • ${t.name} −${t.qty} ${t.unit} (เหลือ ${t.remaining})\n`;});
+    msg+=`🕐 เวลา: ${now}\n🏪 คลังอาภรณ์ กองร้อยพัฒนาที่ 1`;
+    tgNotify(msg);
+    document.getElementById('txBundleSel').value='';
+    document.getElementById('txBundleQty').value='1';
+    document.getElementById('txBundleUser').value='';
+    document.getElementById('txBundleNote').value='';
+    document.getElementById('txBundlePreview').style.display='none';
+    renderBundles();
+    showAl('txAlert',`เบิกชุด "${b.name}" ${qty} ชุด สำเร็จ ✅`);
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 
 function renderTx(){
