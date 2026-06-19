@@ -200,6 +200,7 @@ tr:hover td{background:rgba(0,0,0,.015)}
       <div class="ni" onclick="showPage('bundles',this,'ชุดอุปกรณ์')"><i class="ti ti-packages"></i><span>ชุดอุปกรณ์</span></div>
       <div class="nav-lbl">จัดการ</div>
       <div class="ni" onclick="showPage('history',this,'ประวัติการเบิก-จ่าย')"><i class="ti ti-clock-record"></i><span>ประวัติ</span></div>
+      <div class="ni" onclick="showPage('staff',this,'เจ้าหน้าที่คลัง')"><i class="ti ti-id-badge"></i><span>เจ้าหน้าที่คลัง</span></div>
       <div class="ni" onclick="showPage('users',this,'ผู้ใช้งาน')"><i class="ti ti-users"></i><span>ผู้ใช้งาน</span></div>
     </nav>
     <div class="sb-foot">
@@ -263,56 +264,116 @@ tr:hover td{background:rgba(0,0,0,.015)}
       <div class="page" id="page-transactions">
         <div class="al al-ok" id="txAlert"></div>
 
-        <!-- Toggle เบิกแบบ -->
-        <div style="display:flex;gap:8px;margin-bottom:14px">
-          <button class="btn btn-p" id="tgl-single" onclick="setTxMode('single')" style="flex:1;justify-content:center"><i class="ti ti-box"></i> เบิกรายการเดียว</button>
-          <button class="btn" id="tgl-bundle" onclick="setTxMode('bundle')" style="flex:1;justify-content:center"><i class="ti ti-packages"></i> เบิกเป็นชุด</button>
-        </div>
+        <!-- Mode Tabs -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
 
-        <div class="tx-grid" id="tx-single-panel">
-          <div class="panel">
-            <div class="ph"><div class="pt" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--r400);display:inline-block"></span>เบิกของ (นำออก)</div></div>
-            <div style="padding:16px">
+          <!-- LEFT: เบิกของ -->
+          <div class="panel" style="margin-bottom:0">
+            <!-- Tab header -->
+            <div style="display:flex;border-bottom:0.5px solid var(--border)">
+              <button id="tab-w-single" onclick="setTab('w','single')"
+                style="flex:1;padding:11px 8px;border:none;background:var(--t600);color:#fff;font-size:13px;font-family:inherit;cursor:pointer;font-weight:500;border-radius:12px 0 0 0;display:flex;align-items:center;justify-content:center;gap:6px">
+                <i class="ti ti-box"></i> รายการเดียว
+              </button>
+              <button id="tab-w-bundle" onclick="setTab('w','bundle')"
+                style="flex:1;padding:11px 8px;border:none;background:var(--bg);color:var(--text2);font-size:13px;font-family:inherit;cursor:pointer;border-radius:0 12px 0 0;display:flex;align-items:center;justify-content:center;gap:6px;border-left:0.5px solid var(--border)">
+                <i class="ti ti-packages"></i> เบิกเป็นชุด
+              </button>
+            </div>
+            <!-- Panel title -->
+            <div style="padding:10px 16px;background:var(--r50);border-bottom:0.5px solid var(--r200);display:flex;align-items:center;gap:8px">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--r400);display:inline-block"></span>
+              <span style="font-size:13px;font-weight:500;color:var(--r600)">เบิกของออก</span>
+            </div>
+
+            <!-- Single withdraw -->
+            <div id="w-single-form" style="padding:16px">
               <div class="fg"><label class="fl">อุปกรณ์</label><select class="fs" id="wItem"><option value="">-- เลือกอุปกรณ์ --</option></select></div>
               <div class="fg"><label class="fl">จำนวน</label><input type="number" class="fi" id="wQty" min="1" value="1" inputmode="numeric"></div>
               <div class="fg"><label class="fl">ผู้เบิก</label><select class="fs" id="wUser"><option value="">-- เลือกผู้เบิก --</option></select></div>
               <div class="fg"><label class="fl">หมายเหตุ</label><input type="text" class="fi" id="wNote" placeholder="วัตถุประสงค์..."></div>
-              <button class="btn" style="width:100%;justify-content:center;background:var(--r50);color:var(--r600);border-color:var(--r200);padding:11px" onclick="doWithdraw()"><i class="ti ti-arrow-up-right"></i> ยืนยันการเบิก</button>
+              <button class="btn" style="width:100%;justify-content:center;background:var(--r50);color:var(--r600);border-color:var(--r200);padding:11px" onclick="doWithdraw()">
+                <i class="ti ti-arrow-up-right"></i> ยืนยันการเบิก
+              </button>
             </div>
-          </div>
-          <div class="panel">
-            <div class="ph"><div class="pt" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--t400);display:inline-block"></span>จ่ายเข้า (เพิ่มสต็อก)</div></div>
-            <div style="padding:16px">
-              <div class="fg"><label class="fl">อุปกรณ์</label><select class="fs" id="dItem"><option value="">-- เลือกอุปกรณ์ --</option></select></div>
-              <div class="fg"><label class="fl">จำนวน</label><input type="number" class="fi" id="dQty" min="1" value="1" inputmode="numeric"></div>
-              <div class="fg"><label class="fl">ผู้ดำเนินการ</label><select class="fs" id="dUser"><option value="">-- เลือก --</option></select></div>
-              <div class="fg"><label class="fl">หมายเหตุ</label><input type="text" class="fi" id="dNote" placeholder="แหล่งที่มา..."></div>
-              <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="doDeposit()"><i class="ti ti-arrow-down-left"></i> ยืนยันการจ่ายเข้า</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- เบิกเป็นชุด -->
-        <div id="tx-bundle-panel" style="display:none">
-          <div class="panel">
-            <div class="ph"><div class="pt" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--r400);display:inline-block"></span>เบิกชุดอุปกรณ์</div></div>
-            <div style="padding:16px">
+            <!-- Bundle withdraw -->
+            <div id="w-bundle-form" style="padding:16px;display:none">
               <div class="fg">
-                <label class="fl">เลือกชุดอุปกรณ์</label>
+                <label class="fl">ชุดอุปกรณ์</label>
                 <select class="fs" id="txBundleSel" onchange="renderTxBundlePreview()">
                   <option value="">-- เลือกชุด --</option>
                 </select>
               </div>
-              <!-- Preview รายการในชุด -->
-              <div id="txBundlePreview" style="display:none;background:var(--bg);border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px"></div>
-              <div class="fg"><label class="fl">จำนวนชุด</label><input type="number" class="fi" id="txBundleQty" min="1" value="1" inputmode="numeric" onchange="renderTxBundlePreview()"></div>
+              <div id="txBundlePreview" style="display:none;background:var(--bg);border-radius:8px;padding:11px;margin-bottom:12px;font-size:12px"></div>
+              <div class="fg"><label class="fl">จำนวนชุด</label><input type="number" class="fi" id="txBundleQty" min="1" value="1" inputmode="numeric" oninput="renderTxBundlePreview()"></div>
               <div class="fg"><label class="fl">ผู้เบิก</label><select class="fs" id="txBundleUser"><option value="">-- เลือกผู้เบิก --</option></select></div>
               <div class="fg"><label class="fl">หมายเหตุ</label><input type="text" class="fi" id="txBundleNote" placeholder="วัตถุประสงค์..."></div>
-              <button class="btn" style="width:100%;justify-content:center;background:var(--r50);color:var(--r600);border-color:var(--r200);padding:11px" onclick="doWithdrawBundleInline()"><i class="ti ti-packages"></i> ยืนยันการเบิกชุด</button>
+              <button class="btn" style="width:100%;justify-content:center;background:var(--r50);color:var(--r600);border-color:var(--r200);padding:11px" onclick="doWithdrawBundleInline()">
+                <i class="ti ti-packages"></i> ยืนยันการเบิกชุด
+              </button>
             </div>
           </div>
-        </div>
 
+          <!-- RIGHT: จ่ายเข้า -->
+          <div class="panel" style="margin-bottom:0">
+            <!-- Tab header -->
+            <div style="display:flex;border-bottom:0.5px solid var(--border)">
+              <button id="tab-d-single" onclick="setTab('d','single')"
+                style="flex:1;padding:11px 8px;border:none;background:var(--t600);color:#fff;font-size:13px;font-family:inherit;cursor:pointer;font-weight:500;border-radius:12px 0 0 0;display:flex;align-items:center;justify-content:center;gap:6px">
+                <i class="ti ti-box"></i> รายการเดียว
+              </button>
+              <button id="tab-d-bundle" onclick="setTab('d','bundle')"
+                style="flex:1;padding:11px 8px;border:none;background:var(--bg);color:var(--text2);font-size:13px;font-family:inherit;cursor:pointer;border-radius:0 12px 0 0;display:flex;align-items:center;justify-content:center;gap:6px;border-left:0.5px solid var(--border)">
+                <i class="ti ti-packages"></i> จ่ายเข้าเป็นชุด
+              </button>
+            </div>
+            <!-- Panel title -->
+            <div style="padding:10px 16px;background:var(--t50);border-bottom:0.5px solid var(--t100);display:flex;align-items:center;gap:8px">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--t400);display:inline-block"></span>
+              <span style="font-size:13px;font-weight:500;color:var(--t600)">จ่ายของเข้า (เพิ่มสต็อก)</span>
+            </div>
+
+            <!-- Single deposit -->
+            <div id="d-single-form" style="padding:16px">
+
+              <!-- Quick return จากประวัติ -->
+              <div class="fg">
+                <label class="fl" style="display:flex;align-items:center;gap:6px">
+                  <i class="ti ti-history" style="color:var(--t600)"></i> เลือกจากประวัติการเบิก
+                </label>
+                <select class="fs" id="dFromHistory" onchange="fillDepositFromHistory()" style="background:var(--t50);border-color:var(--t200)">
+                  <option value="">-- เลือกรายการที่เคยเบิก --</option>
+                </select>
+              </div>
+              <div class="fg"><label class="fl">ผู้ดำเนินการรับคืน (เจ้าหน้าที่คลัง)</label><select class="fs" id="dUser"><option value="">-- เลือกเจ้าหน้าที่คลัง --</option></select></div>
+              <div class="fg"><label class="fl">หมายเหตุ</label><input type="text" class="fi" id="dNote" placeholder="หมายเหตุ..."></div>
+              <input type="hidden" id="dItem">
+              <input type="hidden" id="dQty" value="1">
+              <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="doDeposit()">
+                <i class="ti ti-arrow-down-left"></i> ยืนยันการจ่ายเข้า
+              </button>
+            </div>
+
+            <!-- Bundle deposit -->
+            <div id="d-bundle-form" style="padding:16px;display:none">
+              <div class="fg">
+                <label class="fl">ชุดอุปกรณ์</label>
+                <select class="fs" id="txDepBundleSel" onchange="renderTxDepBundlePreview()">
+                  <option value="">-- เลือกชุด --</option>
+                </select>
+              </div>
+              <div id="txDepBundlePreview" style="display:none;background:var(--bg);border-radius:8px;padding:11px;margin-bottom:12px;font-size:12px"></div>
+              <div class="fg"><label class="fl">จำนวนชุด</label><input type="number" class="fi" id="txDepBundleQty" min="1" value="1" inputmode="numeric" oninput="renderTxDepBundlePreview()"></div>
+              <div class="fg"><label class="fl">ผู้ดำเนินการ</label><select class="fs" id="txDepBundleUser"><option value="">-- เลือก --</option></select></div>
+              <div class="fg"><label class="fl">หมายเหตุ</label><input type="text" class="fi" id="txDepBundleNote" placeholder="แหล่งที่มา..."></div>
+              <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="doDepositBundleInline()">
+                <i class="ti ti-packages"></i> ยืนยันการจ่ายเข้าเป็นชุด
+              </button>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       <!-- History -->
@@ -342,6 +403,18 @@ tr:hover td{background:rgba(0,0,0,.015)}
             <button class="btn btn-p" onclick="openM('addUserM')"><i class="ti ti-user-plus"></i> เพิ่มผู้ใช้</button>
           </div>
           <div id="usersWrap"><div class="ld"><i class="ti ti-loader spin"></i>กำลังโหลด...</div></div>
+        </div>
+      </div>
+
+      <!-- Staff -->
+      <div class="page" id="page-staff">
+        <div class="al al-ok" id="staffAlert"></div>
+        <div class="panel">
+          <div class="ph">
+            <div class="pt">เจ้าหน้าที่คลัง</div>
+            <button class="btn btn-p" onclick="openM('addStaffM')"><i class="ti ti-user-plus"></i> เพิ่มเจ้าหน้าที่</button>
+          </div>
+          <div id="staffWrap"><div class="ld"><i class="ti ti-loader spin"></i>กำลังโหลด...</div></div>
         </div>
       </div>
 
@@ -382,6 +455,9 @@ tr:hover td{background:rgba(0,0,0,.015)}
     </button>
     <button class="bn-item" id="bn-history" onclick="showPage('history',null,'ประวัติ')">
       <i class="ti ti-clock-record"></i><span>ประวัติ</span>
+    </button>
+    <button class="bn-item" id="bn-staff" onclick="showPage('staff',null,'เจ้าหน้าที่คลัง')">
+      <i class="ti ti-id-badge"></i><span>เจ้าหน้าที่</span>
     </button>
     <button class="bn-item" id="bn-users" onclick="showPage('users',null,'ผู้ใช้งาน')">
       <i class="ti ti-users"></i><span>ผู้ใช้</span>
@@ -509,6 +585,34 @@ tr:hover td{background:rgba(0,0,0,.015)}
   </div>
 </div>
 
+<!-- Modal Add Staff -->
+<div class="mo" id="addStaffM">
+  <div class="md">
+    <div class="mh"><span class="mt">เพิ่มเจ้าหน้าที่คลัง</span><button class="mc" onclick="closeM('addStaffM')"><i class="ti ti-x"></i></button></div>
+    <div class="mb">
+      <div class="fr">
+        <div class="fg"><label class="fl">ชั้นยศ</label><select class="fs" id="sfRank">
+          <option value="">-- เลือกยศ --</option>
+          <optgroup label="นายสิบ">
+            <option>สิบตรี</option><option>สิบโท</option><option>สิบเอก</option><option>สิบเอกพิเศษ</option>
+          </optgroup>
+          <optgroup label="นายสิบชั้นประทวน">
+            <option>จ่าสิบตรี</option><option>จ่าสิบโท</option><option>จ่าสิบเอก</option><option>จ่าสิบเอกพิเศษ</option>
+          </optgroup>
+          <optgroup label="นายทหารสัญญาบัตร">
+            <option>ร้อยตรี</option><option>ร้อยโท</option><option>ร้อยเอก</option>
+            <option>พันตรี</option><option>พันโท</option><option>พันเอก</option>
+          </optgroup>
+        </select></div>
+        <div class="fg"><label class="fl">ชื่อ-นามสกุล</label><input type="text" class="fi" id="sfName" placeholder="ชื่อ นามสกุล"></div>
+      </div>
+      <div class="fg"><label class="fl">ตำแหน่ง</label><input type="text" class="fi" id="sfPos" placeholder="เช่น เจ้าหน้าที่คลังอาภรณ์, หัวหน้าคลัง"></div>
+      <div class="fg"><label class="fl">เบอร์โทรศัพท์</label><input type="tel" class="fi" id="sfTel" placeholder="08X-XXX-XXXX" inputmode="tel"></div>
+    </div>
+    <div class="mf"><button class="btn" onclick="closeM('addStaffM')">ยกเลิก</button><button class="btn btn-p" onclick="addStaff()"><i class="ti ti-check"></i> บันทึก</button></div>
+  </div>
+</div>
+
 <script>
 const URL_='https://pynezkfmpdjgzcphmrek.supabase.co';
 const KEY_='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5bmV6a2ZtcGRqZ3pjcGhtcmVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjUxNDcsImV4cCI6MjA5NTgwMTE0N30.met9oQ4pfvjzilzA6NTy589KAt-x70vv-3W0ogpDHQQ';
@@ -519,13 +623,15 @@ async function sPost(t,b){const r=await fetch(`${URL_}/rest/v1/${t}`,{method:'PO
 async function sPatch(t,id,b){const r=await fetch(`${URL_}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(b)});if(!r.ok)throw new Error(await r.text());return r.json();}
 async function sDel(t,id){const r=await fetch(`${URL_}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});if(!r.ok)throw new Error(await r.text());}
 
-let items=[],txs=[],users=[];
+let items=[],txs=[],users=[],staffList=[];
 let curPage='dashboard';
 
 async function loadAll(){
   setSS('loading');
   try{
     [items,txs,users]=await Promise.all([sGet('items','order=created_at.asc'),sGet('transactions','order=created_at.desc&limit=200'),sGet('users_list','order=created_at.asc')]);
+    // โหลด staff จาก localStorage (เก็บในเครื่อง)
+    try{staffList=JSON.parse(localStorage.getItem('staffList')||'[]');}catch(e){staffList=[];}
     await loadBundles();
     setConn(true);setSS('ok');refresh();
   }catch(e){setConn(false);setSS('err');console.error(e);}
@@ -538,7 +644,7 @@ function setSS(s){
   document.getElementById('mobSync').innerHTML=mobBadge;
 }
 function setConn(ok){document.getElementById('cdot').className='cdot '+(ok?'ok':'err');}
-function refresh(){if(curPage==='dashboard')rdash();else if(curPage==='items')renderItems();else if(curPage==='transactions')renderTx();else if(curPage==='history')renderHistory();else if(curPage==='users')renderUsers();else if(curPage==='bundles')renderBundles();}
+function refresh(){if(curPage==='dashboard')rdash();else if(curPage==='items')renderItems();else if(curPage==='transactions')renderTx();else if(curPage==='history')renderHistory();else if(curPage==='users')renderUsers();else if(curPage==='bundles')renderBundles();else if(curPage==='staff')renderStaff();}
 
 function showPage(n,el,title){
   curPage=n;
@@ -626,29 +732,88 @@ async function delItem(id){
   catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 
-function setTxMode(mode){
-  const single=document.getElementById('tx-single-panel');
-  const bundle=document.getElementById('tx-bundle-panel');
-  const btnS=document.getElementById('tgl-single');
-  const btnB=document.getElementById('tgl-bundle');
-  if(mode==='single'){
-    single.style.display='';bundle.style.display='none';
-    btnS.className='btn btn-p';btnS.style.flex='1';btnS.style.justifyContent='center';
-    btnB.className='btn';btnB.style.flex='1';btnB.style.justifyContent='center';
-  }else{
-    single.style.display='none';bundle.style.display='';
-    btnS.className='btn';btnS.style.flex='1';btnS.style.justifyContent='center';
-    btnB.className='btn btn-p';btnB.style.flex='1';btnB.style.justifyContent='center';
-    renderTxBundleDropdowns();
-  }
+function setTab(side, mode){
+  // side = 'w' (withdraw) หรือ 'd' (deposit)
+  const single=document.getElementById(`${side}-single-form`);
+  const bundle=document.getElementById(`${side}-bundle-form`);
+  const tabS=document.getElementById(`tab-${side}-single`);
+  const tabB=document.getElementById(`tab-${side}-bundle`);
+  const isBundle=mode==='bundle';
+  single.style.display=isBundle?'none':'';
+  bundle.style.display=isBundle?'':'none';
+  // Active tab style
+  tabS.style.background=isBundle?'var(--bg)':'var(--t600)';
+  tabS.style.color=isBundle?'var(--text2)':'#fff';
+  tabS.style.fontWeight=isBundle?'400':'500';
+  tabB.style.background=isBundle?'var(--t600)':'var(--bg)';
+  tabB.style.color=isBundle?'#fff':'var(--text2)';
+  tabB.style.fontWeight=isBundle?'500':'400';
+  if(isBundle) renderTxBundleDropdowns();
+}
+
+function renderTxDepBundlePreview(){
+  const bid=parseInt(document.getElementById('txDepBundleSel').value);
+  const qty=parseInt(document.getElementById('txDepBundleQty').value)||1;
+  const preview=document.getElementById('txDepBundlePreview');
+  if(!bid){preview.style.display='none';return;}
+  const bItems=bundleItems.filter(x=>x.bundle_id===bid);
+  if(!bItems.length){preview.style.display='none';return;}
+  const rows=bItems.map(bi=>{
+    const it=items.find(x=>x.id===bi.item_id);
+    if(!it)return'';
+    const add=bi.quantity*qty;
+    return`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px">
+      <span>${it.name}</span>
+      <span style="font-weight:500;color:var(--t600)">+${add} ${it.unit} <span style="color:var(--text3);font-size:11px">(จะเป็น ${it.qty+add})</span></span>
+    </div>`;
+  }).join('');
+  preview.style.display='';
+  preview.innerHTML=`<div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">รายการที่จะเพิ่มสต็อก (${qty} ชุด):</div>${rows}`;
+}
+
+async function doDepositBundleInline(){
+  const bid=parseInt(document.getElementById('txDepBundleSel').value);
+  const qty=parseInt(document.getElementById('txDepBundleQty').value)||1;
+  const uname=document.getElementById('txDepBundleUser').value;
+  const note=document.getElementById('txDepBundleNote').value;
+  if(!bid){alert('กรุณาเลือกชุดอุปกรณ์');return;}
+  const b=bundles.find(x=>x.id===bid);
+  const bItems=bundleItems.filter(x=>x.bundle_id===bid);
+  try{
+    const txList=[];
+    for(const bi of bItems){
+      const it=items.find(x=>x.id===bi.item_id);
+      if(!it)continue;
+      const add=bi.quantity*qty;
+      const nq=it.qty+add;
+      await sPatch('items',it.id,{qty:nq});
+      const tx=await sPost('transactions',{item_id:it.id,item_name:it.name,type:'deposit',qty:add,user_name:uname||'ไม่ระบุ',note:`[ชุด: ${b.name}] ${note||''}`});
+      it.qty=nq;txs.unshift(tx[0]);
+      txList.push({name:it.name,qty:add,unit:it.unit,newQty:nq});
+    }
+    const now=new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    let msg=`🟢 แจ้งเตือน: จ่ายเข้าชุดอุปกรณ์\n📦 ชุด: ${b.name} จำนวน ${qty} ชุด\n👤 ผู้ดำเนินการ: ${uname||'ไม่ระบุ'}\n`;
+    if(note)msg+=`📝 หมายเหตุ: ${note}\n`;
+    msg+=`\nรายการที่เพิ่ม:\n`;
+    txList.forEach(t=>{msg+=`  • ${t.name} +${t.qty} ${t.unit} (รวม ${t.newQty})\n`;});
+    msg+=`🕐 เวลา: ${now}\n🏪 คลังอาภรณ์ กองร้อยพัฒนาที่ 1`;
+    tgNotify(msg);
+    document.getElementById('txDepBundleSel').value='';
+    document.getElementById('txDepBundleQty').value='1';
+    document.getElementById('txDepBundleUser').value='';
+    document.getElementById('txDepBundleNote').value='';
+    document.getElementById('txDepBundlePreview').style.display='none';
+    showAl('txAlert',`จ่ายเข้าชุด "${b.name}" ${qty} ชุด สำเร็จ ✅`);
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 
 function renderTxBundleDropdowns(){
-  const bSel=document.getElementById('txBundleSel');
-  bSel.innerHTML='<option value="">-- เลือกชุด --</option>'+bundles.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
-  const uSel=document.getElementById('txBundleUser');
-  uSel.innerHTML='<option value="">-- เลือกผู้เบิก --</option>'+users.map(u=>`<option value="${u.name}">${u.name}</option>`).join('');
-  document.getElementById('txBundlePreview').style.display='none';
+  const bOpts='<option value="">-- เลือกชุด --</option>'+bundles.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  ['txBundleSel','txDepBundleSel'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=bOpts;});
+  const uOpts='<option value="">-- เลือกผู้เบิก --</option>'+users.map(u=>`<option value="${u.name}">${u.name}</option>`).join('');
+  ['txBundleUser','txDepBundleUser'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=uOpts;});
+  const prev1=document.getElementById('txBundlePreview');if(prev1)prev1.style.display='none';
+  const prev2=document.getElementById('txDepBundlePreview');if(prev2)prev2.style.display='none';
 }
 
 function renderTxBundlePreview(){
@@ -715,9 +880,42 @@ async function doWithdrawBundleInline(){
 
 function renderTx(){
   const oo='<option value="">-- เลือกอุปกรณ์ --</option>'+items.map(i=>`<option value="${i.id}">${i.name} (เหลือ: ${i.qty} ${i.unit})</option>`).join('');
-  document.getElementById('wItem').innerHTML=oo;document.getElementById('dItem').innerHTML=oo;
+  document.getElementById('wItem').innerHTML=oo;
   const uu='<option value="">-- เลือก --</option>'+users.map(u=>`<option value="${u.name}">${u.name}</option>`).join('');
-  document.getElementById('wUser').innerHTML=uu;document.getElementById('dUser').innerHTML=uu;
+  document.getElementById('wUser').innerHTML=uu;
+  // dUser ใช้ staffList
+  const su='<option value="">-- เลือกเจ้าหน้าที่คลัง --</option>'+(staffList.length?staffList.map(s=>`<option value="${s.name}">${s.name}${s.position?' ('+s.position+')':''}</option>`).join(''):'<option disabled>ยังไม่มีเจ้าหน้าที่ — กรอกเองได้</option>');
+  document.getElementById('dUser').innerHTML=su;
+  // bundle dropdowns
+  const bOpts='<option value="">-- เลือกชุด --</option>'+bundles.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  ['txBundleSel','txDepBundleSel'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=bOpts;});
+  ['txBundleUser','txDepBundleUser'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=uu;});
+  // ประวัติการเบิกล่าสุด
+  const histSel=document.getElementById('dFromHistory');
+  if(histSel){
+    const withdrawTxs=txs.filter(t=>t.type==='withdraw');
+    const seen=new Set();
+    const unique=withdrawTxs.filter(t=>{if(seen.has(t.item_id))return false;seen.add(t.item_id);return true;}).slice(0,30);
+    histSel.innerHTML='<option value="">-- เลือกรายการที่เคยเบิก --</option>'+
+      unique.map(t=>{
+        const it=items.find(x=>x.id===t.item_id);
+        const dt=t.created_at?new Date(t.created_at).toLocaleDateString('th-TH',{day:'2-digit',month:'short'}):'';
+        return`<option value="${t.item_id}|${t.qty}|${t.user_name||''}">${it?it.name:t.item_name} — ${t.qty} ${it?it.unit:''} (${t.user_name||'ไม่ระบุ'} ${dt})</option>`;
+      }).join('');
+  }
+}
+
+function fillDepositFromHistory(){
+  const sel=document.getElementById('dFromHistory');
+  const val=sel.value;
+  if(!val)return;
+  const [itemId,qty,userName]=val.split('|');
+  document.getElementById('dItem').value=itemId;
+  document.getElementById('dQty').value=qty;
+  const dUser=document.getElementById('dUser');
+  if(dUser&&userName){const opt=[...dUser.options].find(o=>o.value===userName);if(opt)dUser.value=userName;}
+  const dNote=document.getElementById('dNote');
+  if(dNote)dNote.value='นำส่งคืน';
 }
 async function doWithdraw(){
   const iid=parseInt(document.getElementById('wItem').value);const qty=parseInt(document.getElementById('wQty').value)||1;const uname=document.getElementById('wUser').value;const note=document.getElementById('wNote').value;
@@ -727,10 +925,17 @@ async function doWithdraw(){
   catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 async function doDeposit(){
-  const iid=parseInt(document.getElementById('dItem').value);const qty=parseInt(document.getElementById('dQty').value)||1;const uname=document.getElementById('dUser').value;const note=document.getElementById('dNote').value;
+  const iid=parseInt(document.getElementById('dItem').value);
+  const qty=parseInt(document.getElementById('dQty').value)||1;
+  const uname=document.getElementById('dUser').value;
+  const note=document.getElementById('dNote').value;
   const item=items.find(x=>x.id===iid);
-  if(!item){alert('กรุณาเลือกอุปกรณ์');return;}
-  try{const nq=item.qty+qty;await sPatch('items',iid,{qty:nq});const tx=await sPost('transactions',{item_id:iid,item_name:item.name,type:'deposit',qty,user_name:uname||'ไม่ระบุ',note});item.qty=nq;txs.unshift(tx[0]);tgDeposit(item,qty,uname,note,nq);document.getElementById('dItem').value='';document.getElementById('dQty').value='1';document.getElementById('dUser').value='';document.getElementById('dNote').value='';renderTx();showAl('txAlert',`เพิ่มสต็อก "${item.name}" ${qty} ${item.unit} สำเร็จ ✅ แจ้ง Telegram แล้ว`);}
+  if(!item){alert('กรุณาเลือกรายการจากประวัติก่อน');return;}
+  try{const nq=item.qty+qty;await sPatch('items',iid,{qty:nq});const tx=await sPost('transactions',{item_id:iid,item_name:item.name,type:'deposit',qty,user_name:uname||'ไม่ระบุ',note});item.qty=nq;txs.unshift(tx[0]);tgDeposit(item,qty,uname,note,nq);
+  document.getElementById('dFromHistory').value='';
+  document.getElementById('dItem').value='';
+  document.getElementById('dQty').value='1';document.getElementById('dUser').value='';document.getElementById('dNote').value='';
+  renderTx();showAl('txAlert',`จ่ายเข้า "${item.name}" ${qty} ${item.unit} สำเร็จ ✅ แจ้ง Telegram แล้ว`);}
   catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 
@@ -766,6 +971,54 @@ function showAl(id,msg,type='ok'){
   el.className=`al al-${type==='err'?'err':'ok'} show`;
   el.innerHTML=`<i class="ti ti-${type==='err'?'alert-circle':'circle-check'}"></i>${msg}`;
   setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+// ===== STAFF =====
+function renderStaff(){
+  const wrap=document.getElementById('staffWrap');
+  if(!staffList.length){
+    wrap.innerHTML=`<div class="emp"><i class="ti ti-id-badge"></i>ยังไม่มีเจ้าหน้าที่คลัง<br><span style="font-size:12px">กดปุ่ม "เพิ่มเจ้าหน้าที่" เพื่อเริ่มต้น</span></div>`;
+    return;
+  }
+  wrap.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>ชื่อ-ยศ</th><th>ตำแหน่ง</th><th>เบอร์โทร</th><th></th></tr></thead><tbody>${
+    staffList.map((s,i)=>{
+      const ini=s.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+      return`<tr>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--t50);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--t600);flex-shrink:0">${ini}</div>
+          <div style="font-weight:500">${s.name}</div>
+        </div></td>
+        <td style="font-size:12px;color:var(--text2)">${s.position||'—'}</td>
+        <td style="font-size:12px;color:var(--text2)">${s.tel||'—'}</td>
+        <td><button class="ib d" onclick="delStaff(${i})"><i class="ti ti-trash"></i></button></td>
+      </tr>`;
+    }).join('')
+  }</tbody></table></div>`;
+}
+
+function addStaff(){
+  const rank=document.getElementById('sfRank').value;
+  const name=document.getElementById('sfName').value.trim();
+  if(!name){alert('กรุณาระบุชื่อ');return;}
+  const fullName=(rank?rank+' ':'')+name;
+  const s={name:fullName,position:document.getElementById('sfPos').value.trim(),tel:document.getElementById('sfTel').value.trim()};
+  staffList.push(s);
+  localStorage.setItem('staffList',JSON.stringify(staffList));
+  closeM('addStaffM');
+  ['sfName','sfPos','sfTel'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sfRank').value='';
+  showAl('staffAlert',`เพิ่มเจ้าหน้าที่ "${fullName}" สำเร็จ`);
+  renderStaff();
+  renderTx();
+}
+
+function delStaff(idx){
+  if(!confirm('ต้องการลบเจ้าหน้าที่นี้?'))return;
+  staffList.splice(idx,1);
+  localStorage.setItem('staffList',JSON.stringify(staffList));
+  showAl('staffAlert','ลบเจ้าหน้าที่แล้ว');
+  renderStaff();
+  renderTx();
 }
 
 // ===== BUNDLES =====
