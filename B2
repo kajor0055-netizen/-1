@@ -197,6 +197,7 @@ tr:hover td{background:rgba(0,0,0,.015)}
       <div class="ni active" onclick="showPage('dashboard',this,'แดชบอร์ด')"><i class="ti ti-layout-dashboard"></i><span>แดชบอร์ด</span></div>
       <div class="ni" onclick="showPage('items',this,'รายการอุปกรณ์')"><i class="ti ti-box"></i><span>รายการอุปกรณ์</span></div>
       <div class="ni" onclick="showPage('transactions',this,'เบิก / จ่ายของ')"><i class="ti ti-arrows-exchange"></i><span>เบิก / จ่ายของ</span></div>
+      <div class="ni" onclick="showPage('bundles',this,'ชุดอุปกรณ์')"><i class="ti ti-packages"></i><span>ชุดอุปกรณ์</span></div>
       <div class="nav-lbl">จัดการ</div>
       <div class="ni" onclick="showPage('history',this,'ประวัติการเบิก-จ่าย')"><i class="ti ti-clock-record"></i><span>ประวัติ</span></div>
       <div class="ni" onclick="showPage('users',this,'ผู้ใช้งาน')"><i class="ti ti-users"></i><span>ผู้ใช้งาน</span></div>
@@ -315,6 +316,22 @@ tr:hover td{background:rgba(0,0,0,.015)}
         </div>
       </div>
 
+      <!-- Bundles -->
+      <div class="page" id="page-bundles">
+        <div class="al al-ok" id="bdAlert"></div>
+        <div class="panel">
+          <div class="ph">
+            <div class="pt">ชุดอุปกรณ์</div>
+            <button class="btn btn-p" onclick="openM('addBundleM')"><i class="ti ti-plus"></i> สร้างชุด</button>
+          </div>
+          <div id="bundlesWrap"><div class="ld"><i class="ti ti-loader spin"></i>กำลังโหลด...</div></div>
+        </div>
+        <div class="panel" id="bundleWithdrawPanel" style="display:none">
+          <div class="ph"><div class="pt" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--r400);display:inline-block"></span>เบิกชุดอุปกรณ์</div></div>
+          <div style="padding:16px" id="bundleWithdrawForm"></div>
+        </div>
+      </div>
+
     </div><!-- end content -->
   </div><!-- end main -->
 </div><!-- end app -->
@@ -330,6 +347,9 @@ tr:hover td{background:rgba(0,0,0,.015)}
     </button>
     <button class="bn-item" id="bn-transactions" onclick="showPage('transactions',null,'เบิก / จ่ายของ')">
       <i class="ti ti-arrows-exchange"></i><span>เบิก-จ่าย</span>
+    </button>
+    <button class="bn-item" id="bn-bundles" onclick="showPage('bundles',null,'ชุดอุปกรณ์')">
+      <i class="ti ti-packages"></i><span>ชุด</span>
     </button>
     <button class="bn-item" id="bn-history" onclick="showPage('history',null,'ประวัติ')">
       <i class="ti ti-clock-record"></i><span>ประวัติ</span>
@@ -378,6 +398,37 @@ tr:hover td{background:rgba(0,0,0,.015)}
       <div class="fg"><label class="fl">แจ้งเตือนขั้นต่ำ</label><input type="number" class="fi" id="eMin" min="0" inputmode="numeric"></div>
     </div>
     <div class="mf"><button class="btn" onclick="closeM('editItemM')">ยกเลิก</button><button class="btn btn-p" onclick="saveItem()"><i class="ti ti-check"></i> บันทึก</button></div>
+  </div>
+</div>
+
+<!-- Modal Add Bundle -->
+<div class="mo" id="addBundleM">
+  <div class="md" style="max-width:560px">
+    <div class="mh"><span class="mt">สร้างชุดอุปกรณ์</span><button class="mc" onclick="closeM('addBundleM')"><i class="ti ti-x"></i></button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">ชื่อชุดอุปกรณ์</label><input type="text" class="fi" id="bName" placeholder="เช่น ชุดเดินทางไกล, ชุดสนาม"></div>
+      <div class="fg"><label class="fl">รายละเอียด</label><input type="text" class="fi" id="bDesc" placeholder="อธิบายชุดนี้..."></div>
+      <div class="fg">
+        <label class="fl">รายการอุปกรณ์ในชุด</label>
+        <div id="bundleItemsList"></div>
+        <button class="btn btn-sm" style="margin-top:8px;width:100%" onclick="addBundleRow()"><i class="ti ti-plus"></i> เพิ่มรายการ</button>
+      </div>
+    </div>
+    <div class="mf"><button class="btn" onclick="closeM('addBundleM')">ยกเลิก</button><button class="btn btn-p" onclick="saveBundle()"><i class="ti ti-check"></i> บันทึก</button></div>
+  </div>
+</div>
+
+<!-- Modal Withdraw Bundle -->
+<div class="mo" id="withdrawBundleM">
+  <div class="md">
+    <div class="mh"><span class="mt" id="wbTitle">เบิกชุดอุปกรณ์</span><button class="mc" onclick="closeM('withdrawBundleM')"><i class="ti ti-x"></i></button></div>
+    <div class="mb">
+      <div id="wbItemsPreview" style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px"></div>
+      <div class="fg"><label class="fl">จำนวนชุด</label><input type="number" class="fi" id="wbQty" min="1" value="1" inputmode="numeric"></div>
+      <div class="fg"><label class="fl">ผู้เบิก</label><select class="fs" id="wbUser"><option value="">-- เลือกผู้เบิก --</option></select></div>
+      <div class="fg"><label class="fl">หมายเหตุ</label><input type="text" class="fi" id="wbNote" placeholder="วัตถุประสงค์..."></div>
+    </div>
+    <div class="mf"><button class="btn" onclick="closeM('withdrawBundleM')">ยกเลิก</button><button class="btn" style="background:var(--r50);color:var(--r600);border-color:var(--r200)" onclick="doWithdrawBundle()"><i class="ti ti-arrow-up-right"></i> ยืนยันการเบิก</button></div>
   </div>
 </div>
 
@@ -446,6 +497,7 @@ async function loadAll(){
   setSS('loading');
   try{
     [items,txs,users]=await Promise.all([sGet('items','order=created_at.asc'),sGet('transactions','order=created_at.desc&limit=200'),sGet('users_list','order=created_at.asc')]);
+    await loadBundles();
     setConn(true);setSS('ok');refresh();
   }catch(e){setConn(false);setSS('err');console.error(e);}
 }
@@ -457,7 +509,7 @@ function setSS(s){
   document.getElementById('mobSync').innerHTML=mobBadge;
 }
 function setConn(ok){document.getElementById('cdot').className='cdot '+(ok?'ok':'err');}
-function refresh(){if(curPage==='dashboard')rdash();else if(curPage==='items')renderItems();else if(curPage==='transactions')renderTx();else if(curPage==='history')renderHistory();else if(curPage==='users')renderUsers();}
+function refresh(){if(curPage==='dashboard')rdash();else if(curPage==='items')renderItems();else if(curPage==='transactions')renderTx();else if(curPage==='history')renderHistory();else if(curPage==='users')renderUsers();else if(curPage==='bundles')renderBundles();}
 
 function showPage(n,el,title){
   curPage=n;
@@ -598,6 +650,185 @@ function showAl(id,msg,type='ok'){
   el.className=`al al-${type==='err'?'err':'ok'} show`;
   el.innerHTML=`<i class="ti ti-${type==='err'?'alert-circle':'circle-check'}"></i>${msg}`;
   setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+// ===== BUNDLES =====
+let bundles=[], bundleItems=[];
+let curBundleId=null;
+
+async function loadBundles(){
+  try{
+    bundles = await sGet('bundles','order=created_at.desc');
+    bundleItems = await sGet('bundle_items','order=bundle_id.asc');
+  }catch(e){console.error(e);}
+}
+
+function renderBundles(){
+  const wrap=document.getElementById('bundlesWrap');
+  if(!bundles.length){
+    wrap.innerHTML=`<div class="emp"><i class="ti ti-packages"></i>ยังไม่มีชุดอุปกรณ์<br><span style="font-size:12px">กดปุ่ม "สร้างชุด" เพื่อเริ่มต้น</span></div>`;
+    return;
+  }
+  wrap.innerHTML=`<div style="padding:12px;display:flex;flex-direction:column;gap:10px">${
+    bundles.map(b=>{
+      const bItems=bundleItems.filter(x=>x.bundle_id===b.id);
+      const itemDetails=bItems.map(bi=>{
+        const it=items.find(x=>x.id===bi.item_id);
+        return it?`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--t50);color:var(--t800);border-radius:6px;padding:2px 8px;font-size:11px;margin:2px">${it.name} ×${bi.quantity}</span>`:'';
+      }).join('');
+      const canWithdraw=bItems.every(bi=>{
+        const it=items.find(x=>x.id===bi.item_id);
+        return it && it.qty>=bi.quantity;
+      });
+      return `<div style="background:var(--white);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+          <div>
+            <div style="font-weight:500;font-size:14px">${b.name}</div>
+            ${b.description?`<div style="font-size:12px;color:var(--text3);margin-top:2px">${b.description}</div>`:''}
+          </div>
+          <div style="display:flex;gap:4px;flex-shrink:0">
+            <button class="ib" onclick="openWithdrawBundle(${b.id})" title="เบิกชุดนี้" style="${canWithdraw?'':'opacity:.4;cursor:not-allowed'}"><i class="ti ti-arrow-up-right" style="color:var(--r600)"></i></button>
+            <button class="ib d" onclick="deleteBundle(${b.id})" title="ลบ"><i class="ti ti-trash"></i></button>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:2px">${itemDetails||'<span style="font-size:12px;color:var(--text3)">ไม่มีรายการ</span>'}</div>
+        ${!canWithdraw?`<div style="margin-top:8px;font-size:11px;color:var(--r600)">⚠️ สต็อกไม่เพียงพอสำหรับเบิก</div>`:''}
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+// เพิ่ม row ในฟอร์มสร้างชุด
+function addBundleRow(){
+  const list=document.getElementById('bundleItemsList');
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;gap:8px;margin-bottom:8px;align-items:center';
+  div.innerHTML=`
+    <select class="fs" style="flex:1" onchange="this.nextElementSibling.placeholder='จำนวน ('+getUnit(this.value)+')'">
+      <option value="">-- เลือกอุปกรณ์ --</option>
+      ${items.map(i=>`<option value="${i.id}">${i.name} (เหลือ: ${i.qty} ${i.unit})</option>`).join('')}
+    </select>
+    <input type="number" class="fi" style="width:80px" min="1" value="1" placeholder="จำนวน" inputmode="numeric">
+    <button class="ib d" onclick="this.parentElement.remove()" type="button"><i class="ti ti-x"></i></button>`;
+  list.appendChild(div);
+}
+
+function getUnit(itemId){
+  const it=items.find(x=>x.id==itemId);
+  return it?it.unit:'';
+}
+
+async function saveBundle(){
+  const name=document.getElementById('bName').value.trim();
+  if(!name){alert('กรุณาระบุชื่อชุด');return;}
+  const rows=[...document.getElementById('bundleItemsList').children];
+  const selected=rows.map(r=>{
+    const sel=r.querySelector('select');
+    const qty=parseInt(r.querySelector('input').value)||1;
+    return{item_id:parseInt(sel.value),quantity:qty};
+  }).filter(x=>x.item_id);
+  if(!selected.length){alert('กรุณาเพิ่มอุปกรณ์อย่างน้อย 1 รายการ');return;}
+  try{
+    const res=await sPost('bundles',{name,description:document.getElementById('bDesc').value.trim()||null});
+    const newBundle=res[0];
+    await sPost('bundle_items',selected.map(s=>({bundle_id:newBundle.id,...s})));
+    bundles.unshift(newBundle);
+    const newBItems=selected.map((s,i)=>({id:Date.now()+i,bundle_id:newBundle.id,...s}));
+    bundleItems.push(...newBItems);
+    closeM('addBundleM');
+    document.getElementById('bName').value='';
+    document.getElementById('bDesc').value='';
+    document.getElementById('bundleItemsList').innerHTML='';
+    showAl('bdAlert',`สร้างชุด "${name}" สำเร็จ`);
+    renderBundles();
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
+}
+
+function openWithdrawBundle(bid){
+  curBundleId=bid;
+  const b=bundles.find(x=>x.id===bid);
+  const bItems=bundleItems.filter(x=>x.bundle_id===bid);
+  document.getElementById('wbTitle').textContent=`เบิก: ${b.name}`;
+  document.getElementById('wbQty').value='1';
+  document.getElementById('wbNote').value='';
+  // User dropdown
+  document.getElementById('wbUser').innerHTML='<option value="">-- เลือกผู้เบิก --</option>'+users.map(u=>`<option value="${u.name}">${u.name}</option>`).join('');
+  // Preview items
+  const preview=bItems.map(bi=>{
+    const it=items.find(x=>x.id===bi.item_id);
+    return it?`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:0.5px solid var(--border)">
+      <span>${it.name}</span>
+      <span style="font-weight:500">×${bi.quantity} ${it.unit} <span style="color:var(--text3);font-size:11px">(เหลือ ${it.qty})</span></span>
+    </div>`:'';
+  }).join('');
+  document.getElementById('wbItemsPreview').innerHTML=`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">รายการในชุด (ต่อ 1 ชุด):</div>${preview}`;
+  openM('withdrawBundleM');
+}
+
+async function doWithdrawBundle(){
+  if(!curBundleId){return;}
+  const qty=parseInt(document.getElementById('wbQty').value)||1;
+  const uname=document.getElementById('wbUser').value;
+  const note=document.getElementById('wbNote').value;
+  const b=bundles.find(x=>x.id===curBundleId);
+  const bItems=bundleItems.filter(x=>x.bundle_id===curBundleId);
+
+  // ตรวจสอบว่าสต็อกพอไหม
+  for(const bi of bItems){
+    const it=items.find(x=>x.id===bi.item_id);
+    if(!it||it.qty<bi.quantity*qty){
+      alert(`สต็อกไม่เพียงพอ: "${it?.name||'?'}" มีเพียง ${it?.qty||0} ${it?.unit||''} แต่ต้องการ ${bi.quantity*qty}`);
+      return;
+    }
+  }
+
+  try{
+    // ลดสต็อกทุกรายการในชุด
+    const txList=[];
+    for(const bi of bItems){
+      const it=items.find(x=>x.id===bi.item_id);
+      const needed=bi.quantity*qty;
+      const nq=it.qty-needed;
+      await sPatch('items',it.id,{qty:nq});
+      const tx=await sPost('transactions',{
+        item_id:it.id,
+        item_name:it.name,
+        type:'withdraw',
+        qty:needed,
+        user_name:uname||'ไม่ระบุ',
+        note:`[ชุด: ${b.name}] ${note||''}`
+      });
+      it.qty=nq;
+      txs.unshift(tx[0]);
+      txList.push({name:it.name,qty:needed,unit:it.unit,remaining:nq});
+    }
+
+    // แจ้งเตือน Telegram
+    const now=new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    let msg=`🎒 แจ้งเตือน: เบิกชุดอุปกรณ์\n`;
+    msg+=`📦 ชุด: ${b.name} จำนวน ${qty} ชุด\n`;
+    msg+=`👤 ผู้เบิก: ${uname||'ไม่ระบุ'}\n`;
+    if(note) msg+=`📝 หมายเหตุ: ${note}\n`;
+    msg+=`\nรายการที่เบิก:\n`;
+    txList.forEach(t=>{msg+=`  • ${t.name} −${t.qty} ${t.unit} (เหลือ ${t.remaining})\n`;});
+    msg+=`🕐 เวลา: ${now}\n🏪 คลังอาภรณ์ กองร้อยพัฒนาที่ 1`;
+    tgNotify(msg);
+
+    closeM('withdrawBundleM');
+    showAl('bdAlert',`เบิกชุด "${b.name}" ${qty} ชุด สำเร็จ ✅`);
+    renderBundles();
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
+}
+
+async function deleteBundle(id){
+  if(!confirm('ต้องการลบชุดอุปกรณ์นี้?'))return;
+  try{
+    await sDel('bundles',id);
+    bundles=bundles.filter(x=>x.id!==id);
+    bundleItems=bundleItems.filter(x=>x.bundle_id!==id);
+    showAl('bdAlert','ลบชุดอุปกรณ์แล้ว');
+    renderBundles();
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 
 // ===== TELEGRAM NOTIFICATION via Cloudflare Worker =====
