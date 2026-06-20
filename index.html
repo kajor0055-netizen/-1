@@ -796,7 +796,6 @@ function renderPendingReturns(){
   const confirmBtn=document.getElementById('txDepBundleConfirmBtn');
   const selTxId=document.getElementById('txDepBundleSelectedTxId');
 
-  // reset
   borrowerBox.style.display='none';
   preview.style.display='none';
   staffRow.style.display='none';
@@ -808,42 +807,53 @@ function renderPendingReturns(){
   const b=bundles.find(x=>x.id===bid);
   if(!b){pendingDiv.style.display='none';return;}
 
-  // หา transaction เบิกเป็นชุดนี้ทั้งหมด
+  // หา withdraw transactions ของชุดนี้ทั้งหมด
   const bundleWithdraws=txs.filter(t=>
     t.type==='withdraw' && t.note && t.note.includes(`[ชุด: ${b.name}]`)
   );
 
-  // หา transaction คืนเป็นชุดนี้ทั้งหมด (deposit ที่มี note ชุดเดียวกัน)
+  // GROUP by user+minute (ภายใน 60 วินาทีเดียวกัน = การเบิกครั้งเดียวกัน)
+  const eventMap={};
+  bundleWithdraws.forEach(t=>{
+    const d=new Date(t.created_at);
+    // ตัดให้เหลือแค่นาที (ไม่สนวินาที)
+    const minuteKey=`${t.user_name}|${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}`;
+    if(!eventMap[minuteKey]){
+      eventMap[minuteKey]={
+        user_name:t.user_name,
+        created_at:t.created_at,
+        note:t.note,
+        minuteKey,
+        returned:false
+      };
+    }
+  });
+
+  // หา deposit (คืน) ของชุดนี้
   const bundleDeposits=txs.filter(t=>
     t.type==='deposit' && t.note && t.note.includes(`[ชุด: ${b.name}]`)
   );
 
-  // จับคู่: นับว่าแต่ละ user เบิกกี่ครั้ง คืนกี่ครั้ง
-  // ใช้ timestamp เป็นตัวระบุ แต่ละการเบิกครั้งหนึ่ง = 1 ชุด
-  // หา unique withdraw events โดยใช้ user + date
-  const withdrawEvents={};
-  bundleWithdraws.forEach(t=>{
-    const key=`${t.user_name}|${t.created_at}`;
-    if(!withdrawEvents[key]) withdrawEvents[key]={tx:t,returned:false};
-  });
-
-  // ทำเครื่องหมาย returned โดยจับคู่กับ deposit (คืนทีหลัง)
+  // จับคู่: deposit ที่มี user_name เดียวกัน และเกิดหลัง withdraw = คืนแล้ว
   bundleDeposits.forEach(dt=>{
-    // หา withdraw ของ user คนเดียวกันที่เบิกก่อนหน้านี้แล้วยังไม่ถูก matched
-    const match=Object.values(withdrawEvents).find(e=>
+    const dTime=new Date(dt.created_at).getTime();
+    // หา event ที่ user ตรงกัน เบิกก่อนหน้า แล้วยังไม่ถูก mark returned
+    const match=Object.values(eventMap).find(e=>
       !e.returned &&
-      e.tx.user_name===dt.user_name &&
-      new Date(e.tx.created_at)<=new Date(dt.created_at)
+      e.user_name===dt.user_name &&
+      new Date(e.created_at).getTime()<=dTime
     );
     if(match) match.returned=true;
   });
 
-  // กรองเอาที่ยังไม่คืน
-  const pending=Object.values(withdrawEvents).filter(e=>!e.returned)
-    .sort((a,b)=>new Date(a.tx.created_at)-new Date(b.tx.created_at));
+  // กรองเฉพาะที่ยังค้างอยู่
+  const pending=Object.values(eventMap)
+    .filter(e=>!e.returned)
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+
+  pendingDiv.style.display='';
 
   if(!pending.length){
-    pendingDiv.style.display='';
     pendingItems.innerHTML=`<div style="text-align:center;padding:16px;color:var(--t600);font-size:13px;background:var(--t50);border-radius:8px">
       <i class="ti ti-circle-check" style="font-size:20px;display:block;margin-bottom:4px"></i>
       ไม่มีรายการค้างคืน — ทุกคนคืนครบแล้ว!
@@ -851,18 +861,16 @@ function renderPendingReturns(){
     return;
   }
 
-  pendingDiv.style.display='';
   pendingItems.innerHTML=pending.map(e=>{
-    const t=e.tx;
-    const dt=t.created_at?new Date(t.created_at).toLocaleString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
-    const noteClean=(t.note||'').replace(/\[ชุด: .+?\]\s*/,'');
-    return`<div onclick="selectPendingReturn('${t.user_name}','${t.created_at}','${dt}','${noteClean}',${bid},'${b.name}')"
+    const dt=e.created_at?new Date(e.created_at).toLocaleString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    const noteClean=(e.note||'').replace(/\[ชุด: .+?\]\s*/,'');
+    return`<div onclick="selectPendingReturn('${e.user_name}','${e.created_at}','${dt}','${noteClean}',${bid},'${b.name}','${e.minuteKey}')"
       style="background:var(--white);border:1px solid var(--a200);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s"
       onmouseover="this.style.borderColor='var(--t400)';this.style.background='var(--t50)'"
       onmouseout="this.style.borderColor='var(--a200)';this.style.background='var(--white)'">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div>
-          <div style="font-weight:600;font-size:13px;color:var(--text)">👤 ${t.user_name||'ไม่ระบุ'}</div>
+          <div style="font-weight:600;font-size:13px;color:var(--text)">👤 ${e.user_name||'ไม่ระบุ'}</div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px">🕐 เบิกเมื่อ: ${dt}</div>
           ${noteClean?`<div style="font-size:11px;color:var(--text3)">📝 ${noteClean}</div>`:''}
         </div>
@@ -872,22 +880,18 @@ function renderPendingReturns(){
   }).join('');
 }
 
-function selectPendingReturn(userName, createdAt, dtStr, note, bundleId, bundleName){
+function selectPendingReturn(userName, createdAt, dtStr, note, bundleId, bundleName, minuteKey){
   const b=bundles.find(x=>x.id===bundleId);
   const bItems=bundleItems.filter(x=>x.bundle_id===bundleId);
 
-  // แสดงรายละเอียด
-  const borrowerBox=document.getElementById('txDepBundleBorrower');
   document.getElementById('txDepBundleBorrowerDetail').innerHTML=`
     <div style="display:flex;flex-direction:column;gap:4px">
       <div><span style="color:var(--text3)">ผู้เบิก:</span> <strong style="color:#1D4ED8">${userName}</strong></div>
       <div><span style="color:var(--text3)">เบิกเมื่อ:</span> ${dtStr}</div>
       ${note?`<div><span style="color:var(--text3)">หมายเหตุ:</span> ${note}</div>`:''}
     </div>`;
-  borrowerBox.style.display='';
+  document.getElementById('txDepBundleBorrower').style.display='';
 
-  // แสดง checklist
-  const preview=document.getElementById('txDepBundlePreview');
   const rows=bItems.map(bi=>{
     const it=items.find(x=>x.id===bi.item_id);
     if(!it)return'';
@@ -902,21 +906,20 @@ function selectPendingReturn(userName, createdAt, dtStr, note, bundleId, bundleN
       <span style="font-weight:600;color:var(--t600)">+${bi.quantity}</span>
     </div>`;
   }).join('');
+
+  const preview=document.getElementById('txDepBundlePreview');
   preview.innerHTML=`
     <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px">📦 รายการที่จะรับคืน:</div>
     ${rows}
     <div style="margin-top:8px;font-size:11px;color:var(--text3);text-align:right">ชุด "${bundleName}"</div>`;
   preview.style.display='';
 
-  // เก็บ selectedTxId เป็น user|createdAt เพื่อใช้ตอน submit
+  // เก็บ key เพื่อจับคู่ตอน submit
   document.getElementById('txDepBundleSelectedTxId').value=`${userName}|${createdAt}`;
 
-  // แสดง staff/note/confirm
   document.getElementById('txDepBundleStaffRow').style.display='';
   document.getElementById('txDepBundleNoteRow').style.display='';
   document.getElementById('txDepBundleConfirmBtn').style.display='flex';
-
-  // scroll ลง
   document.getElementById('txDepBundleConfirmBtn').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
