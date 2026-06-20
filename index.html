@@ -357,18 +357,51 @@ tr:hover td{background:rgba(0,0,0,.015)}
 
             <!-- Bundle deposit -->
             <div id="d-bundle-form" style="padding:16px;display:none">
+
+              <!-- เลือกชุด -->
               <div class="fg">
-                <label class="fl">ชุดอุปกรณ์</label>
-                <select class="fs" id="txDepBundleSel" onchange="renderTxDepBundlePreview()">
+                <label class="fl" style="display:flex;align-items:center;gap:6px">
+                  <i class="ti ti-packages" style="color:var(--t600)"></i> เลือกชุดอุปกรณ์
+                </label>
+                <select class="fs" id="txDepBundleSel" onchange="renderPendingReturns()" style="background:var(--t50);border-color:var(--t200)">
                   <option value="">-- เลือกชุด --</option>
                 </select>
               </div>
-              <div id="txDepBundlePreview" style="display:none;background:var(--bg);border-radius:8px;padding:11px;margin-bottom:12px;font-size:12px"></div>
-              <div class="fg"><label class="fl">จำนวนชุด</label><input type="number" class="fi" id="txDepBundleQty" min="1" value="1" inputmode="numeric" oninput="renderTxDepBundlePreview()"></div>
-              <div class="fg"><label class="fl">ผู้ดำเนินการ</label><select class="fs" id="txDepBundleUser"><option value="">-- เลือก --</option></select></div>
-              <div class="fg"><label class="fl">หมายเหตุ</label><input type="text" class="fi" id="txDepBundleNote" placeholder="แหล่งที่มา..."></div>
-              <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="doDepositBundleInline()">
-                <i class="ti ti-packages"></i> ยืนยันการจ่ายเข้าเป็นชุด
+
+              <!-- รายการค้างคืน -->
+              <div id="pendingReturnsList" style="display:none;margin-bottom:14px">
+                <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                  <i class="ti ti-clock-exclamation" style="color:var(--a600)"></i> รายการที่ยังไม่ได้คืน — เลือกเพื่อรับคืน
+                </div>
+                <div id="pendingReturnsItems"></div>
+              </div>
+
+              <!-- รายละเอียดที่เลือก -->
+              <div id="txDepBundleBorrower" style="display:none;background:#EFF6FF;border:0.5px solid #BFDBFE;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:12px">
+                <div style="font-weight:600;color:#1D4ED8;margin-bottom:6px;display:flex;align-items:center;gap:5px">
+                  <i class="ti ti-user"></i> รายละเอียดการเบิก
+                </div>
+                <div id="txDepBundleBorrowerDetail" style="color:var(--text2);line-height:2"></div>
+              </div>
+
+              <!-- checklist รายการในชุด -->
+              <div id="txDepBundlePreview" style="display:none;background:var(--bg);border:0.5px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px"></div>
+
+              <!-- ผู้ดำเนินการรับคืน -->
+              <div class="fg" id="txDepBundleStaffRow" style="display:none">
+                <label class="fl">ผู้ดำเนินการรับคืน (เจ้าหน้าที่คลัง)</label>
+                <select class="fs" id="txDepBundleUser">
+                  <option value="">-- เลือกเจ้าหน้าที่คลัง --</option>
+                </select>
+              </div>
+              <div class="fg" id="txDepBundleNoteRow" style="display:none">
+                <label class="fl">หมายเหตุ</label>
+                <input type="text" class="fi" id="txDepBundleNote" placeholder="หมายเหตุ...">
+              </div>
+              <input type="hidden" id="txDepBundleQty" value="1">
+              <input type="hidden" id="txDepBundleSelectedTxId" value="">
+              <button class="btn btn-p" id="txDepBundleConfirmBtn" style="width:100%;justify-content:center;padding:11px;display:none" onclick="doDepositBundleInline()">
+                <i class="ti ti-arrow-down-left"></i> ยืนยันรับคืนชุดอุปกรณ์
               </button>
             </div>
           </div>
@@ -385,7 +418,9 @@ tr:hover td{background:rgba(0,0,0,.015)}
               <select class="si" style="flex:1;min-width:110px" id="histF" onchange="renderHistory()">
                 <option value="all">ทั้งหมด</option>
                 <option value="withdraw">เบิกออก</option>
-                <option value="deposit">เพิ่มเข้า</option>
+                <option value="deposit">จ่ายเข้า</option>
+                <option value="bundle-w">🎒 เบิกเป็นชุด</option>
+                <option value="bundle-d">🎒 คืนเป็นชุด</option>
               </select>
               <input class="si" style="flex:2;min-width:140px" placeholder="ค้นหา..." id="histSrch" oninput="renderHistory()">
             </div>
@@ -733,7 +768,6 @@ async function delItem(id){
 }
 
 function setTab(side, mode){
-  // side = 'w' (withdraw) หรือ 'd' (deposit)
   const single=document.getElementById(`${side}-single-form`);
   const bundle=document.getElementById(`${side}-bundle-form`);
   const tabS=document.getElementById(`tab-${side}-single`);
@@ -741,42 +775,161 @@ function setTab(side, mode){
   const isBundle=mode==='bundle';
   single.style.display=isBundle?'none':'';
   bundle.style.display=isBundle?'':'none';
-  // Active tab style
   tabS.style.background=isBundle?'var(--bg)':'var(--t600)';
   tabS.style.color=isBundle?'var(--text2)':'#fff';
   tabS.style.fontWeight=isBundle?'400':'500';
   tabB.style.background=isBundle?'var(--t600)':'var(--bg)';
   tabB.style.color=isBundle?'#fff':'var(--text2)';
   tabB.style.fontWeight=isBundle?'500':'400';
-  if(isBundle) renderTxBundleDropdowns();
+  // populate dropdowns ทุกครั้งที่สลับแท็บ
+  renderTx();
 }
 
-function renderTxDepBundlePreview(){
+function renderPendingReturns(){
   const bid=parseInt(document.getElementById('txDepBundleSel').value);
-  const qty=parseInt(document.getElementById('txDepBundleQty').value)||1;
+  const pendingDiv=document.getElementById('pendingReturnsList');
+  const pendingItems=document.getElementById('pendingReturnsItems');
+  const borrowerBox=document.getElementById('txDepBundleBorrower');
   const preview=document.getElementById('txDepBundlePreview');
-  if(!bid){preview.style.display='none';return;}
-  const bItems=bundleItems.filter(x=>x.bundle_id===bid);
-  if(!bItems.length){preview.style.display='none';return;}
+  const staffRow=document.getElementById('txDepBundleStaffRow');
+  const noteRow=document.getElementById('txDepBundleNoteRow');
+  const confirmBtn=document.getElementById('txDepBundleConfirmBtn');
+  const selTxId=document.getElementById('txDepBundleSelectedTxId');
+
+  // reset
+  borrowerBox.style.display='none';
+  preview.style.display='none';
+  staffRow.style.display='none';
+  noteRow.style.display='none';
+  confirmBtn.style.display='none';
+  selTxId.value='';
+
+  if(!bid){pendingDiv.style.display='none';return;}
+  const b=bundles.find(x=>x.id===bid);
+  if(!b){pendingDiv.style.display='none';return;}
+
+  // หา transaction เบิกเป็นชุดนี้ทั้งหมด
+  const bundleWithdraws=txs.filter(t=>
+    t.type==='withdraw' && t.note && t.note.includes(`[ชุด: ${b.name}]`)
+  );
+
+  // หา transaction คืนเป็นชุดนี้ทั้งหมด (deposit ที่มี note ชุดเดียวกัน)
+  const bundleDeposits=txs.filter(t=>
+    t.type==='deposit' && t.note && t.note.includes(`[ชุด: ${b.name}]`)
+  );
+
+  // จับคู่: นับว่าแต่ละ user เบิกกี่ครั้ง คืนกี่ครั้ง
+  // ใช้ timestamp เป็นตัวระบุ แต่ละการเบิกครั้งหนึ่ง = 1 ชุด
+  // หา unique withdraw events โดยใช้ user + date
+  const withdrawEvents={};
+  bundleWithdraws.forEach(t=>{
+    const key=`${t.user_name}|${t.created_at}`;
+    if(!withdrawEvents[key]) withdrawEvents[key]={tx:t,returned:false};
+  });
+
+  // ทำเครื่องหมาย returned โดยจับคู่กับ deposit (คืนทีหลัง)
+  bundleDeposits.forEach(dt=>{
+    // หา withdraw ของ user คนเดียวกันที่เบิกก่อนหน้านี้แล้วยังไม่ถูก matched
+    const match=Object.values(withdrawEvents).find(e=>
+      !e.returned &&
+      e.tx.user_name===dt.user_name &&
+      new Date(e.tx.created_at)<=new Date(dt.created_at)
+    );
+    if(match) match.returned=true;
+  });
+
+  // กรองเอาที่ยังไม่คืน
+  const pending=Object.values(withdrawEvents).filter(e=>!e.returned)
+    .sort((a,b)=>new Date(a.tx.created_at)-new Date(b.tx.created_at));
+
+  if(!pending.length){
+    pendingDiv.style.display='';
+    pendingItems.innerHTML=`<div style="text-align:center;padding:16px;color:var(--t600);font-size:13px;background:var(--t50);border-radius:8px">
+      <i class="ti ti-circle-check" style="font-size:20px;display:block;margin-bottom:4px"></i>
+      ไม่มีรายการค้างคืน — ทุกคนคืนครบแล้ว!
+    </div>`;
+    return;
+  }
+
+  pendingDiv.style.display='';
+  pendingItems.innerHTML=pending.map(e=>{
+    const t=e.tx;
+    const dt=t.created_at?new Date(t.created_at).toLocaleString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    const noteClean=(t.note||'').replace(/\[ชุด: .+?\]\s*/,'');
+    return`<div onclick="selectPendingReturn('${t.user_name}','${t.created_at}','${dt}','${noteClean}',${bid},'${b.name}')"
+      style="background:var(--white);border:1px solid var(--a200);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s"
+      onmouseover="this.style.borderColor='var(--t400)';this.style.background='var(--t50)'"
+      onmouseout="this.style.borderColor='var(--a200)';this.style.background='var(--white)'">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div>
+          <div style="font-weight:600;font-size:13px;color:var(--text)">👤 ${t.user_name||'ไม่ระบุ'}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">🕐 เบิกเมื่อ: ${dt}</div>
+          ${noteClean?`<div style="font-size:11px;color:var(--text3)">📝 ${noteClean}</div>`:''}
+        </div>
+        <span style="background:var(--a50);color:var(--a600);font-size:11px;padding:3px 8px;border-radius:6px;font-weight:500;white-space:nowrap">⏳ ค้างคืน</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectPendingReturn(userName, createdAt, dtStr, note, bundleId, bundleName){
+  const b=bundles.find(x=>x.id===bundleId);
+  const bItems=bundleItems.filter(x=>x.bundle_id===bundleId);
+
+  // แสดงรายละเอียด
+  const borrowerBox=document.getElementById('txDepBundleBorrower');
+  document.getElementById('txDepBundleBorrowerDetail').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <div><span style="color:var(--text3)">ผู้เบิก:</span> <strong style="color:#1D4ED8">${userName}</strong></div>
+      <div><span style="color:var(--text3)">เบิกเมื่อ:</span> ${dtStr}</div>
+      ${note?`<div><span style="color:var(--text3)">หมายเหตุ:</span> ${note}</div>`:''}
+    </div>`;
+  borrowerBox.style.display='';
+
+  // แสดง checklist
+  const preview=document.getElementById('txDepBundlePreview');
   const rows=bItems.map(bi=>{
     const it=items.find(x=>x.id===bi.item_id);
     if(!it)return'';
-    const add=bi.quantity*qty;
-    return`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px">
-      <span>${it.name}</span>
-      <span style="font-weight:500;color:var(--t600)">+${add} ${it.unit} <span style="color:var(--text3);font-size:11px">(จะเป็น ${it.qty+add})</span></span>
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">
+      <div style="width:20px;height:20px;border-radius:50%;border:2px solid var(--t400);flex-shrink:0;display:flex;align-items:center;justify-content:center">
+        <i class="ti ti-check" style="font-size:11px;color:var(--t400)"></i>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${it.name}</div>
+        <div style="font-size:11px;color:var(--text3)">คืน ${bi.quantity} ${it.unit} · สต็อกจะเป็น ${it.qty+bi.quantity} ${it.unit}</div>
+      </div>
+      <span style="font-weight:600;color:var(--t600)">+${bi.quantity}</span>
     </div>`;
   }).join('');
+  preview.innerHTML=`
+    <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px">📦 รายการที่จะรับคืน:</div>
+    ${rows}
+    <div style="margin-top:8px;font-size:11px;color:var(--text3);text-align:right">ชุด "${bundleName}"</div>`;
   preview.style.display='';
-  preview.innerHTML=`<div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">รายการที่จะเพิ่มสต็อก (${qty} ชุด):</div>${rows}`;
+
+  // เก็บ selectedTxId เป็น user|createdAt เพื่อใช้ตอน submit
+  document.getElementById('txDepBundleSelectedTxId').value=`${userName}|${createdAt}`;
+
+  // แสดง staff/note/confirm
+  document.getElementById('txDepBundleStaffRow').style.display='';
+  document.getElementById('txDepBundleNoteRow').style.display='';
+  document.getElementById('txDepBundleConfirmBtn').style.display='flex';
+
+  // scroll ลง
+  document.getElementById('txDepBundleConfirmBtn').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+
+function renderTxDepBundlePreview(){renderPendingReturns();}
 
 async function doDepositBundleInline(){
   const bid=parseInt(document.getElementById('txDepBundleSel').value);
-  const qty=parseInt(document.getElementById('txDepBundleQty').value)||1;
   const uname=document.getElementById('txDepBundleUser').value;
   const note=document.getElementById('txDepBundleNote').value;
+  const selTxId=document.getElementById('txDepBundleSelectedTxId').value;
   if(!bid){alert('กรุณาเลือกชุดอุปกรณ์');return;}
+  if(!selTxId){alert('กรุณาเลือกรายการค้างคืนก่อน');return;}
+  const [origUser]=selTxId.split('|');
   const b=bundles.find(x=>x.id===bid);
   const bItems=bundleItems.filter(x=>x.bundle_id===bid);
   try{
@@ -784,26 +937,37 @@ async function doDepositBundleInline(){
     for(const bi of bItems){
       const it=items.find(x=>x.id===bi.item_id);
       if(!it)continue;
-      const add=bi.quantity*qty;
-      const nq=it.qty+add;
+      const nq=it.qty+bi.quantity;
       await sPatch('items',it.id,{qty:nq});
-      const tx=await sPost('transactions',{item_id:it.id,item_name:it.name,type:'deposit',qty:add,user_name:uname||'ไม่ระบุ',note:`[ชุด: ${b.name}] ${note||''}`});
+      const tx=await sPost('transactions',{
+        item_id:it.id,item_name:it.name,type:'deposit',qty:bi.quantity,
+        user_name:origUser,
+        note:`[ชุด: ${b.name}] คืนโดย ${uname||'ไม่ระบุ'}${note?' · '+note:''}`
+      });
       it.qty=nq;txs.unshift(tx[0]);
-      txList.push({name:it.name,qty:add,unit:it.unit,newQty:nq});
+      txList.push({name:it.name,qty:bi.quantity,unit:it.unit,newQty:nq});
     }
     const now=new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
-    let msg=`🟢 แจ้งเตือน: จ่ายเข้าชุดอุปกรณ์\n📦 ชุด: ${b.name} จำนวน ${qty} ชุด\n👤 ผู้ดำเนินการ: ${uname||'ไม่ระบุ'}\n`;
+    let msg=`🟢 แจ้งเตือน: รับคืนชุดอุปกรณ์\n📦 ชุด: ${b.name}\n👤 ผู้คืน: ${origUser}\n🛡 รับคืนโดย: ${uname||'ไม่ระบุ'}\n`;
     if(note)msg+=`📝 หมายเหตุ: ${note}\n`;
-    msg+=`\nรายการที่เพิ่ม:\n`;
+    msg+=`\nรายการที่รับคืน:\n`;
     txList.forEach(t=>{msg+=`  • ${t.name} +${t.qty} ${t.unit} (รวม ${t.newQty})\n`;});
     msg+=`🕐 เวลา: ${now}\n🏪 คลังอาภรณ์ กองร้อยพัฒนาที่ 1`;
     tgNotify(msg);
+
+    // reset form
     document.getElementById('txDepBundleSel').value='';
-    document.getElementById('txDepBundleQty').value='1';
     document.getElementById('txDepBundleUser').value='';
     document.getElementById('txDepBundleNote').value='';
+    document.getElementById('txDepBundleSelectedTxId').value='';
+    document.getElementById('txDepBundleBorrower').style.display='none';
     document.getElementById('txDepBundlePreview').style.display='none';
-    showAl('txAlert',`จ่ายเข้าชุด "${b.name}" ${qty} ชุด สำเร็จ ✅`);
+    document.getElementById('txDepBundleStaffRow').style.display='none';
+    document.getElementById('txDepBundleNoteRow').style.display='none';
+    document.getElementById('txDepBundleConfirmBtn').style.display='none';
+    document.getElementById('pendingReturnsList').style.display='none';
+
+    showAl('txAlert',`รับคืนชุด "${b.name}" จาก ${origUser} สำเร็จ ✅`);
   }catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 
@@ -883,17 +1047,22 @@ function renderTx(){
   document.getElementById('wItem').innerHTML=oo;
   const uu='<option value="">-- เลือก --</option>'+users.map(u=>`<option value="${u.name}">${u.name}</option>`).join('');
   document.getElementById('wUser').innerHTML=uu;
-  // dUser ใช้ staffList
-  const su='<option value="">-- เลือกเจ้าหน้าที่คลัง --</option>'+(staffList.length?staffList.map(s=>`<option value="${s.name}">${s.name}${s.position?' ('+s.position+')':''}</option>`).join(''):'<option disabled>ยังไม่มีเจ้าหน้าที่ — กรอกเองได้</option>');
-  document.getElementById('dUser').innerHTML=su;
-  // bundle dropdowns
+  ['txBundleUser'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=uu;});
+
+  // dUser และ txDepBundleUser ใช้ staffList เหมือนกัน
+  const su=staffList.length
+    ?'<option value="">-- เลือกเจ้าหน้าที่คลัง --</option>'+staffList.map(s=>`<option value="${s.name}">${s.name}${s.position?' ('+s.position+')':''}</option>`).join('')
+    :'<option value="">-- ยังไม่มีเจ้าหน้าที่ --</option>';
+  ['dUser','txDepBundleUser'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=su;});
+
+  // bundle withdraw dropdown
   const bOpts='<option value="">-- เลือกชุด --</option>'+bundles.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
-  ['txBundleSel','txDepBundleSel'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=bOpts;});
-  ['txBundleUser','txDepBundleUser'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=uu;});
-  // ประวัติการเบิกล่าสุด
+  const el=document.getElementById('txBundleSel');if(el)el.innerHTML=bOpts;
+
+  // ประวัติการเบิกล่าสุด (รายการเดียว)
   const histSel=document.getElementById('dFromHistory');
   if(histSel){
-    const withdrawTxs=txs.filter(t=>t.type==='withdraw');
+    const withdrawTxs=txs.filter(t=>t.type==='withdraw'&&!(t.note&&t.note.startsWith('[ชุด:')));
     const seen=new Set();
     const unique=withdrawTxs.filter(t=>{if(seen.has(t.item_id))return false;seen.add(t.item_id);return true;}).slice(0,30);
     histSel.innerHTML='<option value="">-- เลือกรายการที่เคยเบิก --</option>'+
@@ -902,6 +1071,24 @@ function renderTx(){
         const dt=t.created_at?new Date(t.created_at).toLocaleDateString('th-TH',{day:'2-digit',month:'short'}):'';
         return`<option value="${t.item_id}|${t.qty}|${t.user_name||''}">${it?it.name:t.item_name} — ${t.qty} ${it?it.unit:''} (${t.user_name||'ไม่ระบุ'} ${dt})</option>`;
       }).join('');
+  }
+
+  // bundle deposit dropdown — แสดงชุดที่มีพร้อมวันเบิกล่าสุด
+  const depBundleSel=document.getElementById('txDepBundleSel');
+  if(depBundleSel){
+    const bundleLastUsed={};
+    txs.filter(t=>t.type==='withdraw'&&t.note&&t.note.startsWith('[ชุด:')).forEach(t=>{
+      const match=t.note.match(/\[ชุด: (.+?)\]/);
+      if(match&&!bundleLastUsed[match[1]])bundleLastUsed[match[1]]=t.created_at;
+    });
+    depBundleSel.innerHTML='<option value="">-- เลือกชุดที่เคยเบิก --</option>'+bundles.map(b=>{
+      const last=bundleLastUsed[b.name];
+      const dt=last?new Date(last).toLocaleDateString('th-TH',{day:'2-digit',month:'short'}):'';
+      return`<option value="${b.id}">${b.name}${dt?' (เบิกล่าสุด '+dt+')':''}</option>`;
+    }).join('');
+    // reset preview
+    const prev=document.getElementById('txDepBundlePreview');if(prev)prev.style.display='none';
+    const borr=document.getElementById('txDepBundleBorrower');if(borr)borr.style.display='none';
   }
 }
 
@@ -940,10 +1127,31 @@ async function doDeposit(){
 }
 
 function renderHistory(){
-  const f=document.getElementById('histF').value;const q=(document.getElementById('histSrch').value||'').toLowerCase();
-  let list=[...txs];if(f!=='all')list=list.filter(t=>t.type===f);if(q)list=list.filter(t=>(t.item_name||'').toLowerCase().includes(q)||(t.user_name||'').toLowerCase().includes(q)||(t.note||'').toLowerCase().includes(q));
+  const f=document.getElementById('histF').value;
+  const q=(document.getElementById('histSrch').value||'').toLowerCase();
+  let list=[...txs];
+  if(f==='withdraw')list=list.filter(t=>t.type==='withdraw');
+  else if(f==='deposit')list=list.filter(t=>t.type==='deposit');
+  else if(f==='bundle-w')list=list.filter(t=>t.type==='withdraw'&&t.note&&t.note.startsWith('[ชุด:'));
+  else if(f==='bundle-d')list=list.filter(t=>t.type==='deposit'&&t.note&&t.note.startsWith('[ชุด:'));
+  if(q)list=list.filter(t=>(t.item_name||'').toLowerCase().includes(q)||(t.user_name||'').toLowerCase().includes(q)||(t.note||'').toLowerCase().includes(q));
   document.getElementById('histWrap').innerHTML=list.length
-    ?`<div class="tbl-wrap"><table><thead><tr><th>วันที่</th><th>อุปกรณ์</th><th>ประเภท</th><th>จำนวน</th><th>ผู้ดำเนินการ</th></tr></thead><tbody>${list.map(t=>`<tr><td style="font-size:11px;color:var(--text2);white-space:nowrap">${fdt(t.created_at)}</td><td>${t.item_name||'—'}</td><td>${t.type==='withdraw'?'<span class="badge br">เบิก</span>':'<span class="badge bt">เพิ่ม</span>'}</td><td style="font-weight:500">${t.qty}</td><td style="font-size:12px">${t.user_name||'—'}</td></tr>`).join('')}</tbody></table></div>`
+    ?`<div class="tbl-wrap"><table><thead><tr><th>วันที่</th><th>อุปกรณ์</th><th>ประเภท</th><th>จำนวน</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ/ชุด</th></tr></thead><tbody>${list.map(t=>{
+      const isBundle=t.note&&t.note.startsWith('[ชุด:');
+      const bundleName=isBundle?t.note.match(/\[ชุด: (.+?)\]/)?.[1]||'':'';
+      const noteClean=isBundle?t.note.replace(/\[ชุด: .+?\]\s*/,''):t.note||'';
+      const typeBadge=t.type==='withdraw'
+        ?(isBundle?'<span class="badge" style="background:#FDE8E8;color:#A32D2D">🎒 เบิกชุด</span>':'<span class="badge br">เบิก</span>')
+        :(isBundle?'<span class="badge" style="background:#D1FAE5;color:#065F46">🎒 คืนชุด</span>':'<span class="badge bt">จ่ายเข้า</span>');
+      return`<tr>
+        <td style="font-size:11px;color:var(--text2);white-space:nowrap">${fdt(t.created_at)}</td>
+        <td>${t.item_name||'—'}</td>
+        <td>${typeBadge}</td>
+        <td style="font-weight:500">${t.qty}</td>
+        <td style="font-size:12px">${t.user_name||'—'}</td>
+        <td style="font-size:11px;color:var(--text3)">${bundleName?`<span style="color:var(--t600);font-weight:500">${bundleName}</span>${noteClean?' · '+noteClean:''}`:noteClean||'—'}</td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`
     :`<div class="emp"><i class="ti ti-history"></i>ไม่มีประวัติ</div>`;
 }
 
